@@ -1,0 +1,49 @@
+# uv
+.uv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Rust
+target/
+**/*.rs.bk
+*.pdb
+
+# Local generated example projects (use `boltra new` to create)
+example/
+
+# Native extension artifacts (built by maturin into site-packages)
+src/boltra/*.pyd
+src/boltra/*.so
+src/boltra/*.dll
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Benchmarks output (baselines saved intentionally in later phases)
+benchmarks/results/

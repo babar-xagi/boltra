@@ -1,0 +1,19 @@
+[package]
+name = "boltra-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "PyO3 native acceleration layer for Boltra"
+
+[lib]
+name = "boltra_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+boltra-cli = { path = "../boltra-cli" }
+pyo3.workspace = true
+
+[features]
+default = ["pyo3/extension-module"]

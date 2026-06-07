@@ -1,0 +1,79 @@
+[project]
+name = "boltra"
+version = "0.3.0"
+description = "FastAPI development kit with Rust-powered performance modules"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+authors = [{ name = "Boltra Contributors" }]
+keywords = ["fastapi", "cli", "orm", "async", "rust"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/babar-xagi/boltra"
+Repository = "https://github.com/babar-xagi/boltra"
+Documentation = "https://github.com/babar-xagi/boltra/tree/main/doc"
+Changelog = "https://github.com/babar-xagi/boltra/blob/main/doc/plan/CHANGELOG.md"
+
+[project.scripts]
+boltra = "boltra.cli.main:run"
+
+[dependency-groups]
+dev = [
+    "fastapi>=0.115",
+    "maturin>=1.8",
+    "mypy>=1.14",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.9",
+]
+
+[build-system]
+requires = ["maturin>=1.8,<2"]
+build-backend = "maturin"
+
+[tool.maturin]
+manifest-path = "crates/boltra-core/Cargo.toml"
+module-name = "boltra._native"
+python-source = "src"
+features = ["pyo3/extension-module"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["boltra"]
+mypy_path = "src"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: integration tests that start external processes",
+]
