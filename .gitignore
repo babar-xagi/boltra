@@ -31,6 +31,7 @@ target/
 
 # Local generated example projects (use `boltra new` to create)
 example/
+myapp/
 
 # Native extension artifacts (built by maturin into site-packages)
 src/boltra/*.pyd

@@ -13,3 +13,4 @@ Documentation is split by audience:
 - **New user?** → [Installation](user/installation.md) → [CLI usage](user/cli.md)
 - **Contributing?** → [Developer guide](developer/README.md) → [Project structure](developer/project-structure.md)
 - **What shipped?** → [Changelog](plan/CHANGELOG.md)
+- **Rusjango → Boltra?** → [Migration priority](plan/rusjango-migration.md)

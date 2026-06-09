@@ -107,6 +107,7 @@ boltra/
 | **Users** | [doc/user/](doc/user/README.md) — install, CLI |
 | **Developers** | [doc/developer/](doc/developer/README.md) — architecture, files, workflow |
 | **Roadmap** | [doc/plan/phase.md](doc/plan/phase.md) |
+| **Rusjango migration** | [doc/plan/rusjango-migration.md](doc/plan/rusjango-migration.md) |
 | **Changelog** | [doc/plan/CHANGELOG.md](doc/plan/CHANGELOG.md) |
 
 - [Project vision](boltra-doc.md)

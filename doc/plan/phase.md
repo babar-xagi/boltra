@@ -3,8 +3,25 @@
 > **Status:** Active
 > **Parent doc:** [`boltra-doc.md`](../../boltra-doc.md)
 > **ORM decision:** From-scratch, async-first Python + Rust-powered acceleration
+> **Rusjango migration:** [`rusjango-migration.md`](rusjango-migration.md) — priority map from archived Rusjango work
 
 This document is the **execution plan**. Each phase is small, shippable, and gated by quality checks before the next phase starts.
+
+---
+
+## Rusjango Migration Priority (Summary)
+
+Boltra is the **primary project**. Rusjango ([babar-xagi/Rusjango](https://github.com/babar-xagi/Rusjango)) is reference only — archive after Boltra catches up.
+
+| Priority | Boltra phases | Goal |
+|----------|---------------|------|
+| **P0 — next** | 4 → 5 → 6 → 7 | Settings, `add app`, `remove app`, AST settings editor |
+| **P1** | 8 + PyPI | `load_apps`, publish to PyPI |
+| **P2** | 9 → 17 | ORM core + `add orm` + `migrate` (Rusjango Phase 3 parity) |
+| **P3 — skip** | — | Rusjango custom routing, Schema, ASGI — use FastAPI/Pydantic |
+| **P4 — later** | 22+ | Admin, auth, Docker, workers, AI |
+
+Full file-level porting guide: [`rusjango-migration.md`](rusjango-migration.md).
 
 ---
 

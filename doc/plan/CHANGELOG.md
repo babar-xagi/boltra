@@ -4,6 +4,11 @@ All notable changes to Boltra are documented here. Entries follow [Keep a Change
 
 ## [Unreleased]
 
+### Added
+
+- `doc/plan/rusjango-migration.md` — Rusjango → Boltra feature porting priority (P0–P4), file map, and accelerated execution order
+- Rusjango migration summary section in `doc/plan/phase.md`
+
 ## [0.3.0] — 2026-06-06
 
 ### Added — Phase 3 (Dev Server)
