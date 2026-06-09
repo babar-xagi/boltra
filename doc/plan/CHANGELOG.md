@@ -4,10 +4,14 @@ All notable changes to Boltra are documented here. Entries follow [Keep a Change
 
 ## [Unreleased]
 
-### Added
+## [0.3.1] — 2026-06-09
 
-- `doc/plan/rusjango-migration.md` — Rusjango → Boltra feature porting priority (P0–P4), file map, and accelerated execution order
-- Rusjango migration summary section in `doc/plan/phase.md`
+### Fixed
+
+- PyPI wheels now use **abi3-py312** — one wheel per platform supports Python **3.12, 3.13, and 3.14+**
+- Publish workflow builds with Python 3.14 on Linux, Windows, and macOS
+- CI matrix extended to Python 3.13
+- Switched PyPI upload from deprecated `maturin upload` to `uv publish`
 
 ## [0.3.0] — 2026-06-06
 
@@ -20,6 +24,8 @@ All notable changes to Boltra are documented here. Entries follow [Keep a Change
 - Rust clap `dev` subcommand + Python dispatch handler
 - Integration test: serves `/` and `/docs`
 - User docs updated for `boltra dev`
+- `doc/plan/rusjango-migration.md` — Rusjango → Boltra feature porting priority (P0–P4)
+- Rusjango migration summary section in `doc/plan/phase.md`
 
 ### Fixed
 
@@ -75,7 +81,8 @@ All notable changes to Boltra are documented here. Entries follow [Keep a Change
 - GitHub Actions CI: uv + maturin build on Linux/Windows, Python 3.12/3.14
 - `README.md`, `LICENSE` (MIT), `CONTRIBUTING.md`
 
-[Unreleased]: https://github.com/babar-xagi/boltra/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/babar-xagi/boltra/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/babar-xagi/boltra/releases/tag/v0.3.1
 [0.3.0]: https://github.com/babar-xagi/boltra/releases/tag/v0.3.0
 [0.2.0]: https://github.com/babar-xagi/boltra/releases/tag/v0.2.0
 [0.1.0]: https://github.com/babar-xagi/boltra/releases/tag/v0.1.0

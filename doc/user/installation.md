@@ -10,6 +10,23 @@
 
 > **Note:** Boltra uses **maturin** to compile a Rust extension (`boltra._native`) during install. Rust is required for a full install with native acceleration.
 
+## Install from PyPI
+
+```bash
+pip install boltra
+# or
+uv tool install boltra
+```
+
+Boltra ships **abi3 wheels** (`cp312-abi3`) built for Python 3.12 through **3.14+** — one wheel per platform covers all supported versions.
+
+```bash
+boltra --version
+boltra --help
+```
+
+Requires **Python ≥ 3.12** (including 3.14).
+
 ## Install from source (development)
 
 ```bash
@@ -21,7 +38,7 @@ uv sync --group dev
 This will:
 
 1. Create a `.venv` virtual environment
-2. Install Python dependencies (including `typer` for the CLI)
+2. Install Python dev dependencies
 3. Build the PyO3 extension via maturin
 
 ## Verify installation
@@ -59,9 +76,10 @@ After `uv sync`, the `boltra` command is available inside the project venv:
 
 To use `boltra` outside the project, activate the venv first or install the package into your environment with `uv pip install .`.
 
-## Python 3.14
+## Python 3.12 – 3.14
 
-If you use Python 3.14, the build uses ABI forward compatibility (`PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1`) because PyO3 may not officially list 3.14 yet. This is configured automatically in `.cargo/config.toml`.
+Wheels use **stable ABI (abi3-py312)** so the same install works on Python 3.12, 3.13, and 3.14.
+For local builds on 3.14, ABI forward compatibility is enabled in `.cargo/config.toml`.
 
 ## Generated projects (`boltra new`)
 

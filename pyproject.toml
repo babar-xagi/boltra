@@ -1,6 +1,6 @@
 [project]
 name = "boltra"
-version = "0.3.0"
+version = "0.3.1"
 description = "FastAPI development kit with Rust-powered performance modules"
 readme = "README.md"
 license = { text = "MIT" }
@@ -48,7 +48,7 @@ build-backend = "maturin"
 manifest-path = "crates/boltra-core/Cargo.toml"
 module-name = "boltra._native"
 python-source = "src"
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "pyo3/abi3-py312"]
 
 [tool.ruff]
 target-version = "py312"
