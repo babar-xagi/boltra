@@ -54,14 +54,14 @@ dependencies = [
 
 [[package]]
 name = "boltra-cli"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "clap",
 ]
 
 [[package]]
 name = "boltra-core"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "boltra-cli",
  "pyo3",
