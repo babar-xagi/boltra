@@ -1,6 +1,6 @@
 # Project Structure
 
-Complete map of the Boltra repository as of Phase 2.
+Complete map of the Boltra repository as of Phase 4.
 
 ```text
 boltra/
@@ -46,7 +46,7 @@ boltra/
 │       └── project/
 │           ├── __init__.py
 │           ├── generator.py     # create_project()
-│           └── templates.py     # main.py, settings.py, pyproject.toml
+│           └── templates.py     # main.py, settings.py, .env.example, pyproject.toml
 ├── tests/
 │   ├── __init__.py
 │   ├── test_cli.py              # CLI parse + dispatch tests
@@ -78,7 +78,7 @@ boltra/
 | `cli/dispatch.py` | Phase 2 | `execute()` — help, version, `new` handler |
 | `cli/main.py` | Phase 1 | `run()` console entry point |
 | `project/generator.py` | Phase 2 | `create_project()`, collision checks |
-| `project/templates.py` | Phase 2 | Generated file templates |
+| `project/templates.py` | Phase 2-4 | Generated file templates, including settings and `.env.example` |
 
 ### Rust
 
@@ -93,7 +93,7 @@ boltra/
 |------|--------|
 | `test_native.py` | Extension import, `parse_argv`, env disable, fallback |
 | `test_cli.py` | Help, version, clap parse, entry point |
-| `test_project.py` | File generation, import, collisions, CLI integration |
+| `test_project.py` | File generation, settings import, `.env` loading, collisions, CLI integration |
 
 ### Documentation (`doc/`)
 

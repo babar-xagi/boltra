@@ -42,7 +42,7 @@ uv run boltra --help
 | 1 | Done | `boltra --help`, `boltra --version` CLI |
 | 2 | Done | `boltra new`, Rust clap + Python handlers |
 | 3 | Done | `boltra dev` dev server |
-| 4 | Next | Pydantic settings & `.env` |
+| 4 | In progress | Pydantic settings & `.env` scaffold |
 
 Track shipped work in [CHANGELOG](../plan/CHANGELOG.md).
 

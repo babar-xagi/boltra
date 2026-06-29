@@ -64,9 +64,13 @@ Repo layout, uv, maturin, PyO3, CI, pre-commit.
 
 `boltra new <name>` — Rust clap parses, Python generates project files.
 
-### Phase 3 — next
+### Phase 3 - done
 
-`boltra dev` — uvicorn dev server with reload.
+`boltra dev` - uvicorn dev server with reload.
+
+### Phase 4 - in progress
+
+Generated settings use pydantic-settings with `.env.example`.
 
 ## Adding a feature checklist
 
@@ -83,7 +87,7 @@ Example smoke tests:
 
 ```bash
 uv run boltra --version
-# Expected: 0.2.0
+# Expected: 0.4.0
 
 uv run boltra new demo
 # Expected: creates demo/ with main.py, settings.py, pyproject.toml

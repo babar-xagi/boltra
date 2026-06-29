@@ -1,109 +1,78 @@
 # Python Package
 
-The installable package lives under `src/boltra/`. Boltra uses a **src layout** (recommended by PyPA).
+The installable package lives under `src/boltra/`. Boltra uses a `src` layout and a maturin build backend so Python code and the PyO3 extension ship together.
 
 ## Package entry: `boltra.__init__`
 
 ```python
 from boltra.native import is_available, native_version
 
-__version__ = "0.1.0"
+__version__ = "0.4.0"
 __all__ = ["__version__", "is_available", "native_version"]
 ```
-
-Public symbols:
 
 | Symbol | Type | Description |
 |--------|------|-------------|
 | `__version__` | `str` | Python package version |
 | `is_available()` | `() -> bool` | Whether Rust extension is active |
-| `native_version()` | `() -> str \| None` | Rust extension version or `None` |
+| `native_version()` | `() -> str | None` | Rust extension version or `None` |
 
 ## Native bridge: `boltra.native`
 
-**File:** `src/boltra/native.py`
-**Phase:** 0
+The bridge is the only public place Python code uses to check native availability.
 
-### `is_available() -> bool`
-
-1. Return `False` if `BOLTRA_DISABLE_NATIVE` is truthy
-2. On first call, try `import boltra._native`
-3. Cache result; subsequent calls are cheap
-4. On `ImportError`, log INFO and return `False`
-
-### `native_version() -> str | None`
-
-Returns `_native.version()` when available, else `None`.
-
-### Environment variable
-
-```text
-BOLTRA_DISABLE_NATIVE=1|true|yes|on
-```
-
-Used in tests (`tests/test_native.py`) and CI to verify the Python fallback path.
+1. Return `False` if `BOLTRA_DISABLE_NATIVE` is truthy.
+2. On first call, try `import boltra._native`.
+3. Cache the result so later checks are cheap.
+4. On `ImportError`, log once at INFO and continue on the Python path.
 
 ## Type stubs: `boltra._native.pyi`
 
-**File:** `src/boltra/_native.pyi`
-**Phase:** 0
-
-mypy cannot inspect the compiled extension. The `.pyi` stub documents:
+mypy cannot inspect the compiled extension. The `.pyi` stub documents the exposed native functions:
 
 ```python
 def is_available() -> bool: ...
 def version() -> str: ...
+def parse_argv(args: list[str]) -> dict[str, object]: ...
+def cli_help() -> str: ...
 __version__: str
 ```
 
 ## CLI: `boltra.cli`
 
-**Files:** `src/boltra/cli/__init__.py`, `src/boltra/cli/main.py`
-**Phase:** 1
+Boltra uses a hybrid CLI:
 
-### Typer application
+- Rust `clap` parses argv when `boltra._native` is available.
+- Python `argparse` mirrors the parser as a fallback.
+- Python dispatch executes commands such as `new` and `dev`.
 
-```python
-app = typer.Typer(
-    name="boltra",
-    help="Boltra — Django-like productivity for FastAPI projects.",
-    no_args_is_help=True,
-    add_completion=False,
-)
-```
+| File | Role |
+|------|------|
+| `cli/main.py` | Console-script entry point |
+| `cli/parser.py` | Native parser bridge plus argparse fallback |
+| `cli/dispatch.py` | Routes parsed actions to Python handlers |
 
-### Console script
-
-Registered in `pyproject.toml`:
+Console script:
 
 ```toml
 [project.scripts]
 boltra = "boltra.cli.main:run"
 ```
 
-`run()` invokes `app()` — this is what executes when you type `boltra` in the shell.
+## Generated project settings
 
-### Version flag
-
-`--version` / `-V` uses Typer's eager callback pattern so it exits before any subcommand runs.
+`boltra new` writes a direct FastAPI project. Its `settings.py` uses `pydantic-settings` when installed, reads `.env`, exposes a cached `settings` object, and keeps uppercase compatibility aliases such as `APP_NAME` and `DEBUG`.
 
 ## Dependencies
 
-Runtime (from `pyproject.toml`):
+Boltra itself keeps runtime dependencies minimal. Generated projects declare their own app dependencies, currently `fastapi`, `pydantic-settings`, and `uvicorn[standard]`.
 
-```toml
-dependencies = [
-    "typer>=0.15",
-]
-```
+Dev-only tools are in `[dependency-groups] dev`: pytest, ruff, mypy, maturin, pre-commit, and FastAPI for generated-project import tests.
 
-Dev-only tools are in `[dependency-groups] dev` (pytest, ruff, mypy, maturin, pre-commit).
+## Adding new modules
 
-## Adding new modules (guidelines)
-
-1. Create `src/boltra/<module>/` with `__init__.py`
-2. Add public APIs with type hints and docstrings
-3. Wire CLI subcommands in `boltra.cli` — keep CLI thin
-4. Add tests under `tests/`
-5. Document in `doc/user/` and `doc/developer/`
-6. Entry in `doc/plan/CHANGELOG.md`
+1. Create `src/boltra/<module>/` with `__init__.py`.
+2. Add public APIs with type hints and docstrings.
+3. Wire CLI subcommands in both Rust clap and Python fallback when user-facing.
+4. Add tests under `tests/`.
+5. Update user docs, developer docs, and the changelog.

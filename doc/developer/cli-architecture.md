@@ -60,9 +60,9 @@ result = _native.parse_argv(["new", "hello"])
 | File | Role |
 |------|------|
 | `generator.py` | `create_project()` — writes files, checks collisions |
-| `templates.py` | `main.py`, `settings.py`, `pyproject.toml` templates |
+| `templates.py` | `main.py`, `settings.py`, `.env.example`, `pyproject.toml` templates |
 
-Phase 3 will add `boltra.dev` for `boltra dev`; Phase 4+ adds more subcommands in **both** clap and Python dispatch.
+`boltra.dev` handles `boltra dev`; Phase 5+ adds more subcommands in **both** clap and Python dispatch.
 
 ## Adding a new subcommand
 

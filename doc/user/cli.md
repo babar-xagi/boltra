@@ -25,7 +25,7 @@ uv run boltra --help
 
 ### `boltra --help`
 
-Shows CLI name, tagline, and available options. Parsed by **Rust clap**, executed in Python.
+Shows CLI name, tagline, and available commands. Native builds parse this with Rust clap; fallback builds use Python argparse.
 
 ```bash
 boltra --help
@@ -33,7 +33,7 @@ boltra --help
 
 ### `boltra --version`
 
-Prints the installed Boltra version (e.g. `0.1.0`).
+Prints the installed Boltra version, for example `0.4.0`.
 
 ```bash
 boltra --version
@@ -42,7 +42,7 @@ boltra -V
 
 ### `boltra new <name>`
 
-Creates a minimal FastAPI project with direct FastAPI code (no wrapper).
+Creates a minimal FastAPI project with direct FastAPI code, typed settings, and an `.env.example` file.
 
 ```bash
 boltra new hello
@@ -52,16 +52,19 @@ Generated layout:
 
 ```text
 hello/
-├── main.py
-├── settings.py
-└── pyproject.toml
+|-- main.py
+|-- settings.py
+|-- pyproject.toml
+`-- .env.example
 ```
 
 Rules:
 
 - Name must start with a letter
 - Only letters, digits, hyphens, and underscores allowed
-- Will not overwrite an existing directory
+- Existing directories are never overwritten
+
+The generated `settings.py` loads environment variables and `.env` values through `pydantic-settings` when installed, with a small import fallback for first-run friendliness.
 
 Example output:
 
@@ -70,14 +73,13 @@ Created project 'hello' in /path/to/hello
 
 Next steps:
   cd hello
-  uv sync
-  uv run uvicorn main:app --reload
+  uv sync                    # creates a local .venv
+  boltra dev                 # start server with reload
 ```
 
 ### `boltra dev`
 
-Runs the FastAPI development server with auto-reload. Must be run inside a
-Boltra project (directory with `[tool.boltra]` in `pyproject.toml`).
+Runs the FastAPI development server with auto-reload. It must be run inside a Boltra project with `[tool.boltra]` in `pyproject.toml`.
 
 ```bash
 cd hello
@@ -113,21 +115,13 @@ With no subcommand, shows help.
 
 | Command | Phase | Description |
 |---------|-------|-------------|
-| `boltra add app <name>` | 4+ | Add an app module |
+| `boltra add app <name>` | 5 | Add an app module |
+| `boltra remove app <name>` | 6 | Remove an app module safely |
+| `boltra doctor` | early hardening | Check project configuration and environment health |
 | `boltra add orm` | 9+ | Add async ORM |
 | `boltra add admin` | 22+ | Add admin dashboard |
 
 See the [phased roadmap](../plan/phase.md) for the full schedule.
-
-## Examples
-
-```bash
-# Check version after install
-boltra --version
-
-# Confirm CLI is wired correctly
-boltra --help
-```
 
 ## Environment variables
 

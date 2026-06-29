@@ -111,6 +111,33 @@ def test_cli_dev_banner_before_uvicorn(
     assert "/docs" in out
 
 
+def test_cli_dev_ctrl_c_exits_cleanly(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``boltra dev`` handles Ctrl+C without a traceback."""
+    create_project("demo", cwd=tmp_path)
+    project = tmp_path / "demo"
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        assert command[0] == "uv"
+        assert cwd == project
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("boltra.dev.server.subprocess.run", fake_run)
+
+    code = execute(["dev"], cwd=project)
+    out = capsys.readouterr().out
+
+    assert code == 130
+    assert "Stopped Boltra dev server" in out
+
+
 @pytest.mark.integration
 def test_dev_server_serves_routes(tmp_path: Path) -> None:
     """``boltra dev`` serves ``/`` and ``/docs`` (Phase 3 exit criteria)."""

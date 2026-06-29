@@ -56,10 +56,10 @@ Expected output:
 
 ```text
 $ uv run boltra --version
-0.1.0
+0.4.0
 
 $ uv run python -c "import boltra; print(boltra.is_available(), boltra.native_version())"
-True 0.1.0
+True 0.4.0
 ```
 
 ## Install the CLI globally (optional)
@@ -83,8 +83,8 @@ For local builds on 3.14, ABI forward compatibility is enabled in `.cargo/config
 
 ## Generated projects (`boltra new`)
 
-A new project only depends on **FastAPI** and **uvicorn** — not `boltra` itself.
-That keeps `uv sync` working before Boltra is published to PyPI.
+A new project depends on **FastAPI**, **pydantic-settings**, and **uvicorn** — not `boltra` itself.
+That keeps `uv sync` focused on the generated app while Boltra remains a scaffolding tool.
 
 ```bash
 cd hello

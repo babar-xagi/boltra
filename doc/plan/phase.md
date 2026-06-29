@@ -739,8 +739,8 @@ Phase 29–33 (Hardening → v1.0)
 
 | Field | Value |
 |-------|-------|
-| **Active phase** | Phase 0 — not started |
-| **Next action** | Initialize repo layout and tooling |
-| **Blocked by** | Nothing |
+| **Active phase** | Phase 4 — in progress |
+| **Next action** | Finish verification for generated Pydantic settings and `.env.example` |
+| **Blocked by** | Local test execution is blocked in the current sandbox session |
 
 Update this table when each phase completes.

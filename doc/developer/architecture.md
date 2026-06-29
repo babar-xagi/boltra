@@ -11,7 +11,7 @@ Boltra is a **monorepo** combining:
 ```text
 ┌─────────────────────────────────────────────────────────┐
 │                     User / Developer                     │
-│                    `boltra` CLI (typer)                  │
+│                    `boltra` CLI (clap + Python)                  │
 └─────────────────────────┬───────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────┐
@@ -55,7 +55,7 @@ Future ORM code will follow the same pattern: delegate to `_native` when `is_ava
 
 ### CLI layer
 
-Phase 1 uses **Typer** for the `boltra` console script. Subcommands will live in `boltra.cli` and call internal modules (`boltra.project`, `boltra.apps`, etc.) as phases add them.
+The CLI is split between Rust clap parsing and Python command execution. `boltra.cli.parser` uses `boltra._native.parse_argv()` when the PyO3 extension is available, and mirrors the same commands with argparse as a fallback.
 
 Entry point (in `pyproject.toml`):
 
@@ -82,9 +82,9 @@ strip = "symbols"
 |--------|-------|----------------|
 | `boltra.cli` | 1 | Command-line interface |
 | `boltra.native` | 0 | Rust bridge + fallback |
-| `boltra.project` | 2 | Project generator |
+| `boltra.project` | 2, 4 | Project generator, generated settings, `.env.example` |
 | `boltra.dev` | 3 | Dev server wrapper |
-| `boltra.apps` | 4+ | App scaffolding |
+| `boltra.apps` | 5+ | App scaffolding |
 | `boltra.orm` | 9–21 | Async ORM (Python + Rust) |
 
 Keep **clean boundaries** — CLI should not contain ORM logic; internal packages talk through well-defined APIs.

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from boltra.cli.parser import validate_project_name
-from boltra.project.templates import main_py, pyproject_toml, settings_py
+from boltra.project.templates import env_example, main_py, pyproject_toml, settings_py
 
 
 class ProjectError(Exception):
@@ -46,6 +46,11 @@ def create_project(name: str, *, cwd: Path | None = None) -> Path:
     )
     (project_dir / "pyproject.toml").write_text(
         pyproject_toml(name),
+        encoding="utf-8",
+        newline="\n",
+    )
+    (project_dir / ".env.example").write_text(
+        env_example(name),
         encoding="utf-8",
         newline="\n",
     )

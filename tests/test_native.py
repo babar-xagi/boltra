@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 import sys
 
 import pytest
@@ -11,6 +12,16 @@ import boltra
 import boltra._native as _native_ext
 import boltra.native as native
 from boltra.cli.parser import parse_argv
+
+
+def _native_disabled() -> bool:
+    """Return True when the test process explicitly disables native helpers."""
+    return os.environ.get("BOLTRA_DISABLE_NATIVE", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def test_native_extension_imports() -> None:
@@ -28,6 +39,11 @@ def test_native_parse_argv() -> None:
 
 def test_public_native_api() -> None:
     """Package-level helpers expose native availability."""
+    if _native_disabled():
+        assert boltra.is_available() is False
+        assert boltra.native_version() is None
+        return
+
     assert boltra.is_available() is True
     assert boltra.native_version() == boltra.__version__
 

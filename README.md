@@ -72,7 +72,7 @@ The Rust crate `crates/boltra-core` exposes `boltra._native` via PyO3. Python co
 import boltra
 
 boltra.is_available()      # True when PyO3 extension is loaded
-boltra.native_version()    # "0.1.0"
+boltra.native_version()    # "0.4.0"
 ```
 
 Disable native acceleration (for testing or unsupported platforms):

@@ -86,6 +86,9 @@ def run_dev_server(*, cwd: Path | None = None) -> int:
 
     try:
         result = subprocess.run(command, cwd=project_root, check=False)
+    except KeyboardInterrupt:
+        sys.stdout.write("\nStopped Boltra dev server.\n")
+        return 130
     except FileNotFoundError as exc:
         sys.stderr.write(f"error: failed to start uvicorn ({exc})\n")
         return 1
