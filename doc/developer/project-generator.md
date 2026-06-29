@@ -38,7 +38,8 @@ Defined in `src/boltra/project/templates.py`:
 - `main_py(name)` creates a FastAPI app and reads title/debug from `settings`.
 - `settings_py(name)` creates a typed `Settings` object, `.env` loading, uppercase aliases, and a default `SECRET_KEY` warning.
 - `env_example(name)` creates local configuration examples.
-- `pyproject_toml(name)` declares `fastapi`, `pydantic-settings`, `uvicorn[standard]`, and `[tool.boltra]`.
+- `pyproject_toml(name)` declares `fastapi`, `pydantic-settings`,
+  `uvicorn[standard]`, and `[tool.boltra]` dev-server metadata.
 
 ## Core API
 
@@ -57,6 +58,7 @@ Tests in `tests/test_project.py` cover:
 
 - file generation, including `.env.example`
 - generated `main.py` import
+- generated home route JSON output
 - `.env` values loading through generated settings
 - existing-directory and invalid-name failures
 - CLI integration output

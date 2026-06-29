@@ -16,10 +16,18 @@ in [`phase.md`](phase.md).
 - `main.py` now reads API title and debug mode from generated settings
 - Generated projects declare `pydantic-settings` alongside FastAPI and uvicorn
 - Project generator tests cover `.env` loading through generated settings
+- Generated projects now include explicit `host` and `port` defaults for
+  `boltra dev`
 
 ### Fixed
 
 - `boltra dev` now exits cleanly on Ctrl+C instead of printing a traceback
+- `boltra dev` now reads optional `host` and `port` values from
+  `[tool.boltra]`
+- Generated home routes now return a normal JSON dict instead of malformed
+  double-brace template output
+- `pyproject.toml` files saved with a UTF-8 BOM are accepted by project
+  detection and dev-server config loading
 
 ## [0.3.1] - 2026-06-09
 

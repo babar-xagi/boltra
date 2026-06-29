@@ -24,7 +24,7 @@ app = FastAPI(
 
 @app.get("/")
 async def home():
-    return {{"message": "Hello from FastAPI + Boltra Kit"}}
+    return {"message": "Hello from FastAPI + Boltra Kit"}
 """
 
 
@@ -281,6 +281,8 @@ dependencies = [
 mode = "fastapi-kit"
 app = "main:app"
 settings = "settings.py"
+host = "127.0.0.1"
+port = 8000
 # Boltra CLI is used to scaffold and manage this project.
 # Add `boltra` as a dependency when it is published or install from source:
 #   uv add boltra --path ../path/to/boltra

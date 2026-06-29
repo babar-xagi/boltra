@@ -122,3 +122,4 @@ Boltra will use pure-Python fallbacks. Native acceleration for ORM hot paths is 
 | `boltra: command not found` | Run via `uv run boltra` or activate `.venv` |
 | PyO3 build fails on 3.14 | Ensure `.cargo/config.toml` exists; set `PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1` |
 | Slow rebuild after Rust edits | Run `uv run maturin develop --uv` for incremental dev builds |
+| Port 8000 already in use | Change `port` under `[tool.boltra]` in the generated `pyproject.toml` |

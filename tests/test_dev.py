@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import signal
+import socket
 import subprocess
 import sys
 import time
@@ -12,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from boltra.cli.dispatch import execute
-from boltra.dev.config import find_project_root, load_boltra_config
+from boltra.dev.config import DevConfigError, find_project_root, load_boltra_config
 from boltra.dev.server import build_uvicorn_command, format_dev_banner, run_dev_server
 from boltra.project.generator import create_project
 
@@ -27,6 +30,47 @@ def test_load_boltra_config(tmp_path: Path) -> None:
     assert config.settings == "settings.py"
     assert config.host == "127.0.0.1"
     assert config.port == 8000
+
+
+def test_load_boltra_config_custom_host_port(tmp_path: Path) -> None:
+    """``load_boltra_config`` reads optional host and port values."""
+    project = create_project("demo", cwd=tmp_path)
+    pyproject = project / "pyproject.toml"
+    source = pyproject.read_text(encoding="utf-8")
+    source = source.replace('host = "127.0.0.1"', 'host = "0.0.0.0"')
+    source = source.replace("port = 8000", "port = 8765")
+    pyproject.write_text(source, encoding="utf-8")
+
+    config = load_boltra_config(pyproject)
+
+    assert config.host == "0.0.0.0"
+    assert config.port == 8765
+
+
+def test_load_boltra_config_rejects_invalid_port(tmp_path: Path) -> None:
+    """``load_boltra_config`` rejects ports outside TCP range."""
+    project = create_project("demo", cwd=tmp_path)
+    pyproject = project / "pyproject.toml"
+    source = pyproject.read_text(encoding="utf-8")
+    pyproject.write_text(
+        source.replace("port = 8000", "port = 70000"), encoding="utf-8"
+    )
+
+    with pytest.raises(DevConfigError, match="port"):
+        load_boltra_config(pyproject)
+
+
+def test_load_boltra_config_accepts_utf8_bom(tmp_path: Path) -> None:
+    """``load_boltra_config`` accepts pyproject files saved with a UTF-8 BOM."""
+    project = create_project("demo", cwd=tmp_path)
+    pyproject = project / "pyproject.toml"
+    source = pyproject.read_text(encoding="utf-8")
+    pyproject.write_text(f"\ufeff{source}", encoding="utf-8")
+
+    config = load_boltra_config(pyproject)
+
+    assert config.app == "main:app"
+    assert find_project_root(project) == project
 
 
 def test_find_project_root(tmp_path: Path) -> None:
@@ -60,6 +104,8 @@ def test_build_uvicorn_command_uses_uv(tmp_path: Path) -> None:
 
     assert command[:3] == ["uv", "run", "uvicorn"]
     assert command[3] == "main:app"
+    assert command[command.index("--host") + 1] == "127.0.0.1"
+    assert command[command.index("--port") + 1] == "8000"
     assert "--reload" in command
 
 
@@ -146,6 +192,12 @@ def test_dev_server_serves_routes(tmp_path: Path) -> None:
 
     create_project("demo", cwd=tmp_path)
     project = tmp_path / "demo"
+    port = _unused_port()
+    pyproject = project / "pyproject.toml"
+    source = pyproject.read_text(encoding="utf-8")
+    pyproject.write_text(
+        source.replace("port = 8000", f"port = {port}"), encoding="utf-8"
+    )
 
     sync = subprocess.run(
         ["uv", "sync"],
@@ -157,22 +209,29 @@ def test_dev_server_serves_routes(tmp_path: Path) -> None:
     if sync.returncode != 0:
         pytest.skip(f"uv sync failed: {sync.stderr}")
 
-    proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            "from boltra.dev.server import run_dev_server; "
-            "raise SystemExit(run_dev_server())",
-        ],
-        cwd=project,
-    )
+    command = [
+        sys.executable,
+        "-c",
+        "from boltra.dev.server import run_dev_server; "
+        "raise SystemExit(run_dev_server())",
+    ]
+    popen_kwargs: dict[str, object] = {
+        "cwd": project,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+    }
+    if sys.platform == "win32":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    proc = subprocess.Popen(command, **popen_kwargs)
 
     try:
-        _wait_for_url("http://127.0.0.1:8000/", timeout=30.0)
-        _wait_for_url("http://127.0.0.1:8000/docs", timeout=5.0)
+        _wait_for_url(f"http://127.0.0.1:{port}/", timeout=30.0)
+        _wait_for_url(f"http://127.0.0.1:{port}/docs", timeout=5.0)
     finally:
-        proc.terminate()
-        proc.wait(timeout=10)
+        _stop_process_tree(proc)
 
 
 def shutil_which(cmd: str) -> str | None:
@@ -198,3 +257,30 @@ def _wait_for_url(url: str, *, timeout: float) -> None:
     if last_error is not None:
         msg = f"{msg}: {last_error}"
     raise AssertionError(msg)
+
+
+def _unused_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def _stop_process_tree(proc: subprocess.Popen[bytes]) -> None:
+    if proc.poll() is not None:
+        return
+
+    if sys.platform == "win32":
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    else:
+        os.killpg(proc.pid, signal.SIGTERM)
+
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=10)

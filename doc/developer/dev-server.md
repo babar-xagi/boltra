@@ -7,9 +7,9 @@ Phase 3 — runs the generated FastAPI app with uvicorn reload.
 ```text
 boltra dev
     → find_project_root()     # pyproject.toml with [tool.boltra]
-    → load_boltra_config()    # app, mode, settings
+    → load_boltra_config()    # app, mode, settings, host, port
     → print banner (URL, docs, mode)
-    → uv run uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+    → uv run uvicorn main:app --host <host> --port <port> --reload
 ```
 
 ## Modules
@@ -27,6 +27,8 @@ boltra dev
 | `app` | `main:app` | uvicorn target |
 | `mode` | `fastapi-kit` | printed in banner |
 | `settings` | `settings.py` | not used until Phase 4+ |
+| `host` | `127.0.0.1` | uvicorn bind host |
+| `port` | `8000` | uvicorn bind port |
 
 ## Environment selection
 

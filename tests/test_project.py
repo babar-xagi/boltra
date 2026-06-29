@@ -64,6 +64,8 @@ def test_create_project_files(tmp_path: Path) -> None:
     pyproject_source = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
     assert 'requires-python = ">=3.12"' in pyproject_source
     assert '"pydantic-settings>=2.6"' in pyproject_source
+    assert 'host = "127.0.0.1"' in pyproject_source
+    assert "port = 8000" in pyproject_source
     assert '"boltra"' not in pyproject_source
 
 
@@ -78,6 +80,19 @@ def test_generated_project_imports(tmp_path: Path) -> None:
     assert module.app.title == "Myapp API"  # type: ignore[attr-defined]
 
     sys.modules.pop("generated_main", None)
+    sys.modules.pop("settings", None)
+
+
+async def test_generated_home_route_returns_json(tmp_path: Path) -> None:
+    """Generated home route returns a JSON-serializable dict."""
+    project_dir = create_project("myapp", cwd=tmp_path)
+    main_file = project_dir / "main.py"
+
+    module = _import_generated_module("generated_main_route", main_file, project_dir)
+
+    assert await module.home() == {"message": "Hello from FastAPI + Boltra Kit"}
+
+    sys.modules.pop("generated_main_route", None)
     sys.modules.pop("settings", None)
 
 
