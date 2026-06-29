@@ -33,6 +33,10 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Install macOS universal2 targets
+        if: runner.os == 'macOS'
+        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+
       # Native build with abi3-py312: one wheel per platform works on Python 3.12–3.14+.
       - uses: astral-sh/setup-uv@v6
         with:
