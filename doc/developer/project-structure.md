@@ -23,6 +23,12 @@ boltra/
 │   │   ├── __init__.py            # Public CLI exports
 │   │   ├── cli.py                # Entry point and command handlers
 │   │   └── parser.py             # argparse and ParsedCommand
+│   ├── apps/
+│   │   ├── __init__.py            # add_app / AppError exports
+│   │   ├── generator.py          # Scaffold, registration, and rollback
+│   │   ├── registration.py       # AST-located source edits
+│   │   ├── validation.py         # Import-safe package name rules
+│   │   └── templates/router.py.tmpl # APIRouter starter resource
 │   ├── project/
 │   │   ├── __init__.py            # Public generator exports
 │   │   ├── generator.py          # Creation and partial-write cleanup
@@ -43,6 +49,9 @@ boltra/
 │   ├── cli/
 │   │   ├── __init__.py
 │   │   └── test_cli.py
+│   ├── apps/
+│   │   ├── __init__.py
+│   │   └── test_apps.py           # Registration and filesystem contracts
 │   ├── project/
 │   │   ├── __init__.py
 │   │   ├── test_generator.py

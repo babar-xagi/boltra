@@ -20,6 +20,7 @@ boltra --version
 boltra -V
 boltra new --help
 boltra dev --help
+boltra add app --help
 ```
 
 No arguments show general help. Subcommand help describes only that command.
@@ -50,6 +51,26 @@ uv sync
 cp .env.example .env
 boltra dev
 ```
+
+## `boltra add app <name>`
+
+Create a modular FastAPI app and register its router:
+
+```bash
+boltra add app students
+```
+
+Creates `apps/students/__init__.py` and `apps/students/router.py`, plus the shared
+`apps/__init__.py` if needed. Updates the configured application's source with
+an explicit router import and `include_router()` call. `/students/` responds with
+`{"app": "students", "status": "ok"}` and appears in OpenAPI.
+
+Names must be lowercase ASCII Python package identifiers, starting with a letter;
+keywords and Windows device names are rejected. Existing apps are preserved.
+The command works from project subdirectories. It requires a source module with
+a direct top-level FastAPI instance; factories and nested attributes are unsupported.
+Settings and dependencies are unchanged. See [modular apps](apps.md) for supported
+layouts, examples, conflicts, and failed-write recovery.
 
 ## `boltra dev`
 
@@ -120,6 +141,6 @@ project = create_project("hello", cwd=Path("/tmp"))
 
 ## Planned commands
 
-`add app`, `remove app`, router auto-discovery, ORM/migrations, admin, auth,
+`remove app`, router auto-discovery, ORM/migrations, admin, auth,
 workers, and AI are roadmap items. The current parser does not accept them.
 See the [roadmap](../plan/phase.md).

@@ -8,7 +8,8 @@ and tests before optimization.
 ## What exists
 
 The current toolkit creates an ordinary FastAPI app with typed environment
-settings and launches a reloadable development server. The complete shipped
+settings and launches a reloadable development server. It also creates modular
+app packages and explicitly registers their routers. The complete shipped
 behavior is documented in the [README](README.md) and [user guides](doc/user/README.md).
 
 Boltra is a development toolkit. It does not implement its own HTTP routing,
@@ -26,8 +27,8 @@ validation framework, or ASGI server. FastAPI and Uvicorn provide those parts.
 
 ## Future direction
 
-First complete modular app creation/removal, structured settings editing, and
-router discovery. Then design and implement a Python async ORM in vertical slices:
+With modular app creation implemented, complete safe removal, structured settings
+editing, and router discovery. Then implement a Python async ORM in vertical slices:
 connections, model metadata, table creation, CRUD, filters, transactions, and
 migrations. Admin and authentication should build on a tested foundation.
 

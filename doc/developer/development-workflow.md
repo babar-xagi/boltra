@@ -48,6 +48,11 @@ Edit `project/templates/` assets. `template_engine.py` substitutes placeholders;
 `generator.py` handles destination creation/cleanup. Run project/settings and
 packaging tests because assets must work from installed wheels too.
 
+App assets live in `apps/templates/`. `apps/generator.py` renders the router,
+and `apps/registration.py` plans source edits. Run `tests/apps`, the HTTP/reload
+integration, and packaging checks for changes to that workflow. Lint Python
+`.tmpl` files with `ruff check --extension tmpl:python <asset>`.
+
 For manual scaffolding into an existing parent directory:
 
 ```bash

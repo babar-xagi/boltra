@@ -33,6 +33,8 @@ environment. No native toolchain is part of the build.
 5. `dev/config.py` — locates and validates project configuration.
 6. `dev/server.py` — selects an environment and launches Uvicorn.
 7. `dev/windows.py` — handles Windows reload compatibility.
+8. `apps/generator.py`, `registration.py`, and `validation.py` — create modular
+   apps, register routers through AST-located edits, and enforce package-name rules.
 
 Paths above are inside `src/boltra/`. The [roadmap](../plan/phase.md) identifies
-app management and the Python ORM as future work.
+safe app removal, router auto-discovery, and the Python ORM as future work.

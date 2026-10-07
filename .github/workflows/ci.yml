@@ -28,11 +28,11 @@ jobs:
       - name: Lint
         run: |
           uv run --no-sync ruff check .
-          uv run --no-sync ruff check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl
+          uv run --no-sync ruff check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl src/boltra/apps/templates/router.py.tmpl
       - name: Formatting
         run: |
           uv run --no-sync ruff format --check .
-          uv run --no-sync ruff format --check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl
+          uv run --no-sync ruff format --check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl src/boltra/apps/templates/router.py.tmpl
       - name: Types
         run: uv run --no-sync mypy src
       - name: Tests, HTTP integration, and packaging

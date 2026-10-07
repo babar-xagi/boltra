@@ -39,9 +39,11 @@ package to access the CLI functions without relying on internal file names.
 This file implements the CLI entry point, routing, and terminal output:
 
 - `run()` reads `sys.argv[1:]` and exits with the returned command status.
-- `execute(argv, cwd=None)` parses input and routes help/version/new/dev/error.
+- `execute(argv, cwd=None)` routes help/version/new/dev/add_app/error.
 - `_new_project(name, cwd=None)` calls the generator, converts `ProjectError` to
   a readable error, and prints the next-step instructions.
+- `_add_app(name, cwd=None)` creates/registers an app, converts `AppError`, and
+  prints the new endpoint.
 
 The optional `cwd` is passed to generation/discovery, without changing the
 process-wide directory. Success returns `0`, usage errors return `2`, and domain
@@ -60,7 +62,7 @@ the corresponding project/server integration suite.
 
 ### `src/boltra/cli/parser.py`
 
-Defines standard-library argparse options: help/version, `new <name>`, and `dev`.
+Defines argparse options: help/version, `new <name>`, `dev`, and `add app <name>`.
 `ParsedCommand` is a frozen dataclass with action, optional name, help/error text,
 and exit status.
 
@@ -68,6 +70,7 @@ and exit status.
 internal exception and returns data without printing or exiting. `_project_name`
 converts the shared validator's `ValueError` into `ArgumentTypeError`, preserving
 its original message.
+`_app_name` adapts the app package validator using the same error contract.
 
 ```python
 from boltra.cli import parse_argv
@@ -79,6 +82,61 @@ assert parsed.name == "school_api"
 
 Tests cover global/subcommand help, one error message, valid/invalid inputs,
 version, and the action/status contract.
+
+## Apps folder
+
+### `src/boltra/apps/__init__.py`
+
+Exports `add_app` and `AppError` as the domain API independent of terminal output.
+
+```python
+from pathlib import Path
+from boltra.apps import add_app
+
+directory = add_app("students", cwd=Path("/path/to/school_api"))
+```
+
+### `src/boltra/apps/validation.py`
+
+`validate_app_name(name)` accepts lowercase ASCII Python package names beginning
+with a letter. It rejects keywords/soft keywords and portable filesystem conflicts
+including Windows device names. Both the CLI parser and generator use it.
+
+### `src/boltra/apps/registration.py`
+
+`register_router(original, name, attribute)` returns updated source bytes. It
+parses UTF-8 source into an AST without importing project modules, checks for one
+direct top-level FastAPI constructor assignment, and locates import/registration
+positions. Imported FastAPI aliases, annotations, and configured attribute names
+are supported; factories and nested attributes fail explicitly.
+
+The source is edited at line boundaries rather than regenerated, preserving
+comments, existing statements, BOM, and line endings. Registration aliases/imports
+are checked for collisions and the result is parsed again before any filesystem
+mutation. The include call precedes later module statements/main guards.
+
+### `src/boltra/apps/generator.py`
+
+`add_app(name, cwd=None)` discovers the nearest project, resolves its configured
+source module, plans registration, and creates `apps/<name>`. `_check_local_path`
+rejects linked/escaping paths. New files use exclusive creation; existing app
+packages and package initializers are preserved.
+
+`_replace_source` writes to a temporary sibling file, preserves source permissions,
+and uses `os.replace` for atomic replacement. The generator checks for a changed
+source before replacement and tracks its created files/directories for rollback.
+It never edits settings, installs packages, or executes the project's Python.
+
+### `src/boltra/apps/templates/router.py.tmpl`
+
+A packaged `string.Template` resource uses `$app_name` for a FastAPI `APIRouter`
+prefix/tag and a starter JSON endpoint. The app imports FastAPI directly and
+requires no Boltra runtime dependency. Maintainers should lint/format this Python
+asset with Ruff's `--extension tmpl:python` option.
+
+Tests: `tests/apps/test_apps.py` for filesystem/CLI/source contracts,
+`tests/dev/test_integration.py` for real HTTP/OpenAPI/live reload, and
+`tests/test_package.py` for installed-wheel resource/CLI behavior.
 
 ## Project folder
 

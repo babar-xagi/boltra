@@ -1,0 +1,11 @@
+"""Routes for the $app_name app; extend this ordinary FastAPI router."""
+
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/$app_name", tags=["$app_name"])
+
+
+@router.get("/")
+async def home() -> dict[str, str]:
+    """Confirm the app is registered and reachable."""
+    return {"app": "$app_name", "status": "ok"}

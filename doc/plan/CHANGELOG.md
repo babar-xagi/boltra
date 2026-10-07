@@ -31,6 +31,13 @@ in [`phase.md`](phase.md).
 
 ### Added
 
+- Phase 5: `boltra add app <name>` creates an import-safe app package and registers
+  a working FastAPI `APIRouter` on the configured application.
+- AST-located source edits preserve existing code/comments, with collision checks,
+  atomic source replacement, and partial-scaffold cleanup on failure.
+- App usage/file guides, failure-recovery tests, installed-wheel app generation,
+  and real HTTP/OpenAPI/live-reload checks for modular routes.
+
 - `python -m boltra` and the published `py.typed` marker.
 - Installed-wheel, resource, and source-archive verification tests.
 - Pydantic/Uvicorn/coverage development dependencies and real repeated-reload tests.

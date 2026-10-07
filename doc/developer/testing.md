@@ -21,6 +21,7 @@ execution from configured remote checks.
 ```bash
 uv run pytest tests/cli
 uv run pytest tests/project
+uv run pytest tests/apps
 uv run pytest tests/dev/test_config.py tests/dev/test_server.py
 uv run pytest -m integration
 uv run pytest -m packaging
@@ -44,15 +45,24 @@ Settings tests import fresh generated modules with Pydantic installed and with
 its import unavailable. They verify explicit/environment/file precedence,
 booleans, overrides, independent lists, caching, and default-secret warnings.
 
+App tests exercise package-name rules, collisions, packaged modules, source
+preservation, unsupported targets, source-write failures, concurrent editor
+changes, and rollback without losing existing files. A real filesystem-link
+test skips when the OS does not permit creating a symbolic link.
+
 The HTTP integration test generates/syncs an app using the current interpreter,
 starts the actual launcher, checks home JSON, Swagger/OpenAPI, and `.env` title,
-then verifies two successive source-code reloads. Windows uses a hidden separate
+then checks two registered app endpoints and their OpenAPI tags, adds a third app
+while the server is running, and verifies two successive source-code reloads.
+Windows uses a hidden separate
 console to isolate signals from pytest. Server logs are captured for diagnosis.
 
 Packaging tests build/inspect wheel and source archives, reject unwanted native
 or cache artifacts, check templates/typing/entry-point files, and install the
 wheel into a clean environment. They run `python -I -m boltra` and its console
 script outside the checkout, without installing app dependencies.
+The installed CLI also creates and registers an app without FastAPI installed;
+scaffolding never executes generated application code.
 
 ## Coverage
 

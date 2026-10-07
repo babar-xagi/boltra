@@ -106,7 +106,17 @@ source changes reload automatically. Stop the server with Ctrl+C.
 ## 6. Extend with FastAPI
 
 Use FastAPI routers, dependencies, Pydantic schemas, and middleware directly.
-The current toolkit does not provide `boltra add app`, ORM, admin, or auth commands.
+Create a route package with:
+
+```bash
+boltra add app students
+```
+
+Visit `/students/` or `/docs`; Boltra creates `apps/students/router.py` and
+registers its router on your application. Extend this router with normal FastAPI
+routes. Read [modular apps](apps.md) for details and supported layouts.
+
+ORM, admin, auth, and automatic router discovery remain roadmap items.
 Their intended order is documented in the [roadmap](../plan/phase.md).
 
 For production serving, use ordinary Uvicorn without reload. On Windows,

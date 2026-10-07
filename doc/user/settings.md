@@ -36,7 +36,7 @@ Use JSON arrays for list values. Common boolean forms include `true/false`,
 | `debug` / `DEBUG` | `true` | FastAPI debug flag |
 | `secret_key` / `SECRET_KEY` | `change-this-secret-key` | Warns when the generated default remains |
 | `allowed_hosts` / `ALLOWED_HOSTS` | localhost and 127.0.0.1 | Stored configuration; no host middleware yet |
-| `installed_apps` / `INSTALLED_APPS` | Empty list | Reserved for the future app system |
+| `installed_apps` / `INSTALLED_APPS` | Empty list | Reserved for future discovery; `add app` registers routers directly |
 | `database_url` / `DATABASE_URL` | None | Reserved configuration; no database connection yet |
 | Feature flags | `false` | Reserved for auth, admin, AI, workers, and payments |
 | `boltra_mode` / `BOLTRA_MODE` | `fastapi-kit` | Toolkit metadata |

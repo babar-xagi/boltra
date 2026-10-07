@@ -40,6 +40,7 @@ def test_wheel_is_pure_python_and_has_templates(distributions: Path) -> None:
         assert "boltra/py.typed" in names
         assert "boltra/cli/cli.py" in names
         assert "boltra/dev/windows.py" in names
+        assert "boltra/apps/templates/router.py.tmpl" in names
         for asset in ["main.py", "settings.py", "pyproject.toml", "env.example"]:
             assert f"boltra/project/templates/{asset}.tmpl" in names
         assert not any(name.endswith((".pyd", ".so", ".dll", ".rs")) for name in names)
@@ -107,6 +108,15 @@ def test_installed_wheel_cli_and_templates(distributions: Path, tmp_path: Path) 
     assert "Created project 'sample'" in result.stdout
     for filename in ["main.py", "settings.py", "pyproject.toml", ".env.example"]:
         assert (tmp_path / "sample" / filename).is_file()
+    result = subprocess.run(
+        [str(cli), "add", "app", "students"],
+        cwd=tmp_path / "sample",
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "Registered endpoint: /students/" in result.stdout
+    assert (tmp_path / "sample/apps/students/router.py").is_file()
     # The removed native helpers are not imported by the public package.
     subprocess.run(
         [

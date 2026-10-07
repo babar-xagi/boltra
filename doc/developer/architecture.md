@@ -25,6 +25,10 @@ cli/parser.py: argparse -> ParsedCommand
          |                 +-> validation.py
          |                 +-> template_engine.py -> templates/*
          |
+         +---- add app -> apps/generator.py
+         |                    +-> validation.py / templates/router.py.tmpl
+         |                    +-> registration.py -> configured app source
+         |
          +---- dev -> dev/config.py -> dev/server.py
                                       +-> project .venv Python, or uv run
                                       +-> Uvicorn / Windows runner
@@ -52,6 +56,22 @@ Readable assets live in `project/templates/`. The template engine loads them wit
 `importlib.resources` and substitutes `$project_name` and `$api_title` through
 `string.Template`. Python/JSON braces remain ordinary source, avoiding nested
 formatting escapes. Resources work from editable checkouts and installed wheels.
+
+## Modular apps
+
+`apps/generator.py` implements `add app`: shared project discovery/config locates
+the configured module, `apps/validation.py` checks import-safe package names, and
+`apps/registration.py` parses its source without executing it. A direct top-level
+FastAPI constructor is required. AST positions locate import and registration
+insertion points; existing source is retained rather than regenerated.
+
+App packages contain `__init__.py` and a packaged `router.py` template. Exclusive
+creation prevents overwrites, and errors clean only newly created files/directories.
+Source is replaced atomically after all app files exist; a detected intervening
+source edit cancels the operation. The generated application imports its own
+routers, with no Boltra runtime dependency or directory auto-discovery.
+
+Settings editing and app removal remain separate later milestones.
 
 ## Settings
 

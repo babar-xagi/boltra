@@ -6,6 +6,7 @@ import argparse
 from dataclasses import dataclass
 from typing import Any, NoReturn
 
+from boltra.apps.validation import validate_app_name
 from boltra.project.validation import validate_project_name
 
 
@@ -46,6 +47,14 @@ def _project_name(value: str) -> str:
         raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
+def _app_name(value: str) -> str:
+    """Use the same import-safe app-name rules as the app generator."""
+    try:
+        return validate_app_name(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
 def parse_argv(args: list[str]) -> ParsedCommand:
     """Parse arguments without a program name, returning a command or message."""
     parser = _ArgumentParser(
@@ -62,6 +71,14 @@ def parse_argv(args: list[str]) -> ParsedCommand:
         help="Project name (letters, digits, hyphens, underscores).",
     )
     subparsers.add_parser("dev", help="Run the development server with auto-reload.")
+    add_parser = subparsers.add_parser("add", help="Add a component to this project.")
+    components = add_parser.add_subparsers(dest="component", required=True)
+    app_parser = components.add_parser(
+        "app", help="Create and register a FastAPI router."
+    )
+    app_parser.add_argument(
+        "name", type=_app_name, help="Lowercase Python package name."
+    )
 
     try:
         ns = parser.parse_args(args)
@@ -80,5 +97,7 @@ def parse_argv(args: list[str]) -> ParsedCommand:
         return ParsedCommand(action="new", name=ns.name)
     if ns.command == "dev":
         return ParsedCommand(action="dev")
+    if ns.command == "add":
+        return ParsedCommand(action="add_app", name=ns.name)
     # No subcommand means general help; argparse already rejected unknown names.
     return ParsedCommand(action="help", help_text=parser.format_help())

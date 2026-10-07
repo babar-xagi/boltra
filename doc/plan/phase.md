@@ -12,7 +12,9 @@ slice, test it, and document it before expanding scope.
 | Typed settings and `.env.example` | Implemented |
 | Dev server, custom app/host/port, reload | Implemented |
 | Pure Python distribution and documented modules | Implemented |
-| App add/remove and discovery | Next |
+| App creation and explicit router registration (Phase 5) | Implemented |
+| Safe app removal (Phase 6) | Next |
+| Structured settings and router discovery | Planned |
 | ORM and other batteries | Planned |
 
 Validation is recorded in [the verification report](../developer/verification.md).
@@ -32,7 +34,7 @@ The source version is 0.5.0; package publication is a separate release action.
 | 7 | Structured settings editor | Idempotent updates without fragile regex editing |
 | 8 | Router auto-discovery | Three apps load without manual router imports |
 
-Phases 0–4 are implemented. Finish 5–8 before starting ORM implementation.
+Phases 0–5 are implemented. Finish 6–8 before starting ORM implementation.
 
 ## Python ORM
 

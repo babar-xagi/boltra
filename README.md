@@ -25,13 +25,14 @@ does not require a compiler or native build toolchain.
 |---------|--------------|
 | `boltra new <name>` | Creates a direct FastAPI app, settings, dependencies, and `.env.example` |
 | `boltra dev` | Discovers the project, launches Uvicorn, and reloads Python changes |
+| `boltra add app <name>` | Creates an app package and registers a working FastAPI router |
 | Typed settings | Reads environment variables and `.env` with Pydantic settings |
 | Project validation | Rejects invalid names and existing destinations; reports write failures |
 | Configurable server | Reads app target, host, and port from `[tool.boltra]` |
 | Windows reload support | Uses a Python compatibility runner for reliable worker restart |
 | Help and version | Supports `--help`, `--version`, and `python -m boltra` |
 
-App add/remove, router discovery, ORM, admin, authentication, workers, and AI are
+App removal, router discovery, ORM, admin, authentication, workers, and AI are
 **planned**. They are not available commands yet. See the [roadmap](doc/plan/phase.md).
 
 ## 🚀 Quick start
@@ -89,6 +90,18 @@ async def health() -> dict[str, str]:
 
 The server reloads the change. Open `/health` or try it from `/docs`.
 
+For routes grouped into their own package:
+
+```bash
+boltra add app students
+```
+
+This creates `apps/students/router.py` and registers its `APIRouter` in the
+configured FastAPI application. Open `/students/` to receive
+`{"app": "students", "status": "ok"}`. Add more routes to that router as your
+app grows. See the [modular apps guide](doc/user/apps.md) for examples, supported
+project layouts, and recovery behavior.
+
 Change the server port in the generated `pyproject.toml`:
 
 ```toml
@@ -109,6 +122,7 @@ reload watches Python source files, not environment/configuration changes.
 |----------|-------|
 | Getting started | [Complete quickstart](doc/user/quickstart.md) |
 | CLI users | [Commands, options, errors, and examples](doc/user/cli.md) |
+| Modular API routes | [App creation and registration](doc/user/apps.md) |
 | App developers | [Settings reference](doc/user/settings.md) |
 | Contributors | [Developer guide](doc/developer/README.md) |
 | Understanding the code | [Detailed file-by-file reference](doc/developer/file-reference.md) |
@@ -134,6 +148,7 @@ Source code is organized by responsibility:
 src/boltra/
 ├── cli/             # cli.py: entry point and command routing; parser.py: arguments
 ├── project/         # Generator, shared validation, and readable template assets
+├── apps/            # App packages, name validation, and AST-based registration
 └── dev/             # Project configuration, server launcher, and Windows runner
 ```
 

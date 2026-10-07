@@ -10,6 +10,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from boltra import __version__
+from boltra.apps import AppError, add_app
 from boltra.cli.parser import parse_argv
 from boltra.dev.server import run_dev_server
 from boltra.project.generator import ProjectError, create_project
@@ -43,6 +44,8 @@ def execute(argv: list[str], *, cwd: Path | None = None) -> int:
         return _new_project(command.name, cwd=cwd)
     if command.action == "dev":
         return run_dev_server(cwd=cwd)
+    if command.action == "add_app":
+        return _add_app(command.name, cwd=cwd)
     if command.action == "error":
         sys.stderr.write(command.error_message or "error: invalid arguments\n")
         return command.exit_code
@@ -68,4 +71,20 @@ def _new_project(name: str | None, *, cwd: Path | None = None) -> int:
     sys.stdout.write("  uv sync                    # install app dependencies\n")
     sys.stdout.write("  boltra dev                 # start server with reload\n\n")
     sys.stdout.write("Tip: deactivate another active venv before running uv sync.\n")
+    return 0
+
+
+def _add_app(name: str | None, *, cwd: Path | None = None) -> int:
+    """Create a router package and show its immediately available endpoint."""
+    if name is None:
+        sys.stderr.write("error: app name is required\n")
+        return 2
+    try:
+        directory = add_app(name, cwd=cwd)
+    except AppError as exc:
+        sys.stderr.write(f"error: {exc}\n")
+        return 1
+    sys.stdout.write(f"Created app '{name}' in {directory}\n")
+    sys.stdout.write(f"Registered endpoint: /{name}/\n")
+    sys.stdout.write("Next: boltra dev, then open the endpoint or /docs.\n")
     return 0

@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from boltra.apps import add_app
 from boltra.project.generator import create_project
 
 
@@ -26,6 +27,8 @@ def test_dev_server_serves_routes(tmp_path: Path) -> None:
 
     create_project("demo", cwd=tmp_path)
     project = tmp_path / "demo"
+    add_app("students", cwd=project)
+    add_app("courses", cwd=project)
     port = _unused_port()
     pyproject = project / "pyproject.toml"
     source = pyproject.read_text(encoding="utf-8")
@@ -85,6 +88,17 @@ def test_dev_server_serves_routes(tmp_path: Path) -> None:
             schema = json.load(response)
         assert schema["info"]["title"] == "Integration API"
         assert "/" in schema["paths"]
+        for name in ("students", "courses"):
+            _wait_for_json(
+                f"http://127.0.0.1:{port}/{name}/", {"app": name, "status": "ok"}
+            )
+            assert schema["paths"][f"/{name}/"]["get"]["tags"] == [name]
+
+        # Adding an app while dev is running must reload into a reachable route.
+        add_app("teachers", cwd=project)
+        _wait_for_json(
+            f"http://127.0.0.1:{port}/teachers/", {"app": "teachers", "status": "ok"}
+        )
 
         main = project / "main.py"
         source = main.read_text(encoding="utf-8")
