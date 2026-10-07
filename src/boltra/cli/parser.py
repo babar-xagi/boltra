@@ -50,7 +50,7 @@ def parse_argv(args: list[str]) -> ParsedCommand:
     """Parse arguments without a program name, returning a command or message."""
     parser = _ArgumentParser(
         prog="boltra",
-        description="Boltra — a Python API development toolkit.",
+        description="Boltra — Django-like productivity for FastAPI projects.",
     )
     parser.add_argument("-V", "--version", action="store_true")
     subparsers = parser.add_subparsers(dest="command")
