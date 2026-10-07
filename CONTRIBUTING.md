@@ -1,74 +1,68 @@
 # Contributing to Boltra
 
-Thank you for your interest in Boltra. This project follows a **phased roadmap** — please read [`doc/plan/phase.md`](doc/plan/phase.md) before opening a PR.
+Boltra is developed in Python first. Keep generated projects readable, implement
+one roadmap milestone at a time, and preserve direct FastAPI usage.
 
-## Stack
+## Set up
 
-- **uv** — Python package manager (not pip directly)
-- **maturin** + **PyO3** — Rust native extensions (`boltra._native`)
-- **cargo** — Rust workspace under `crates/`
+Install Python 3.12+ and uv, then run:
 
-## Getting started
+```bash
+git clone https://github.com/babar-xagi/boltra.git
+cd boltra
+uv sync --locked --group dev
+uv run pre-commit install
+```
 
-1. Fork and clone the repository.
-2. Install [uv](https://docs.astral.sh/uv/) and Rust (≥ 1.85).
-3. Sync dependencies (maturin builds the PyO3 extension automatically):
+Read the [architecture](doc/developer/architecture.md),
+[file reference](doc/developer/file-reference.md), and [roadmap](doc/plan/phase.md)
+before adding a feature. Start CLI work in `src/boltra/cli/cli.py`; project logic
+belongs in `project/`, and server logic belongs in `dev/`.
 
-   ```bash
-   uv sync --group dev
-   uv run pre-commit install
-   ```
+## Required checks
 
-4. After editing Rust code, rebuild the extension:
+```bash
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src
+uv run pytest
+uv run pre-commit run --all-files
+uv build
+```
 
-   ```bash
-   uv run maturin develop --uv
-   ```
+The suite includes real HTTP/reload checks and clean-environment wheel checks.
+Use `uv run pytest -m "not integration and not packaging"` for a quick local
+loop, but run the complete suite before committing.
 
-## Quality gates
+## Code and documentation
 
-Every PR must pass:
+- Type public APIs and write docstrings explaining their contract.
+- Comment design choices, environment handling, and error recovery; avoid
+  comments that merely restate a line of code.
+- Keep terminal output in `cli/cli.py` and return domain errors from other modules.
+- Keep generated source in `project/templates/`; update tests when changing it.
+- Add behavioral regression tests for fixes and meaningful tests for new behavior.
+- Update user docs when commands or settings change, the file reference when
+  structure changes, and `doc/plan/CHANGELOG.md` for notable work.
+- Identify planned features explicitly; do not describe a future command as shipped.
 
-| Check | Command |
-|-------|---------|
-| Lint | `uv run ruff check .` |
-| Format | `uv run ruff format --check .` |
-| Types | `uv run mypy src` |
-| Tests | `uv run pytest` |
-| Native fallback | `BOLTRA_DISABLE_NATIVE=1 uv run pytest` |
-| Rust unit tests | `cargo test --workspace` |
-| Pre-commit | `uv run pre-commit run --all-files` |
+## Branches and commits
 
-Additional rules:
+Use a focused branch such as `codex/python-cli-cleanup`. Keep commits concise and
+use one relevant emoji with a conventional commit type:
 
-- **Type hints** on all public functions and classes.
-- **Docstrings** on every public API symbol.
-- **No TODO without an issue link** in merged code.
-- **Tests** for all new public logic (target ≥ 90% coverage on new code).
-- **Benchmark before Rust** — hot-path Rust code must beat the Python baseline.
-- **Python fallback** — every native feature needs a working pure-Python path.
+```text
+🐍 refactor: simplify Python command routing
+🐛 fix: preserve project-name validation errors
+📚 docs: explain generated application settings
+🧪 test: verify wheel templates in a clean environment
+```
 
-## Branch and commit style
+Use `!` and a `BREAKING CHANGE:` footer for incompatible public API changes.
+Commit bodies should explain the result and meaningful validation. Do not include
+secrets, environments, caches, or generated build artifacts.
 
-- Branch names: `phase-N/short-description` or `fix/short-description`
-- Commits: imperative mood, e.g. `Add typer CLI skeleton for Phase 1`
-- Keep PRs focused on a single phase deliverable when possible.
+## Pull requests
 
-## Phase workflow
-
-1. Check the current phase exit criteria in `doc/plan/phase.md`.
-2. Implement only what that phase specifies.
-3. Add a changelog entry under `doc/plan/CHANGELOG.md`.
-4. Record a manual smoke test in your PR description (command + expected output).
-
-## Documentation
-
-When you ship a phase, update:
-
-- [`doc/plan/CHANGELOG.md`](doc/plan/CHANGELOG.md) — what changed
-- [`doc/user/`](doc/user/README.md) — if end users see new behavior
-- [`doc/developer/`](doc/developer/README.md) — if files, architecture, or workflow change
-
-## Questions
-
-Open a GitHub issue with the `question` label, or refer to [`boltra-doc.md`](boltra-doc.md) and [`doc/developer/`](doc/developer/README.md) for architecture decisions.
+Describe the concrete behavior before and after the change, relevant tests, and
+any compatibility limits. Keep a PR scoped to a coherent feature or milestone.

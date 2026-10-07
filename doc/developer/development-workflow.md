@@ -1,132 +1,95 @@
-# Development Workflow
+# Development workflow
 
-Day-to-day guide for contributing to Boltra.
+## Set up
 
-## First-time setup
+Install Python 3.12+ and uv, then run from the checkout:
 
 ```bash
-git clone <repo>
-cd boltra
-uv sync --group dev
+uv sync --locked --group dev
 uv run pre-commit install
-```
-
-Verify:
-
-```bash
-uv run pytest -v
 uv run boltra --help
-uv run boltra --version
+uv run pytest
 ```
+
+uv creates an editable `.venv` using Hatchling. Python source changes are
+available immediately; there is no extension rebuild.
 
 ## Daily loop
 
 ```bash
-# 1. Create a branch
-git checkout -b phase-N/short-description
-
-# 2. Edit code (Python and/or Rust)
-
-# 3. If you changed Rust:
-uv run maturin develop --uv
-
-# 4. Run checks
+git switch -c codex/my-feature
+uv run pytest -m "not integration and not packaging"
 uv run ruff check .
 uv run ruff format .
 uv run mypy src
-uv run pytest -v
+```
 
-# 5. Pre-commit (optional but recommended)
+Before committing:
+
+```bash
+uv run pytest
+uv run ruff format --check .
 uv run pre-commit run --all-files
+uv build
 ```
 
-## Phase-based development
+Use the [file reference](file-reference.md) to locate domain logic and the
+[testing guide](testing.md) for targeted checks.
 
-Boltra ships in **phases**. Before coding:
+## CLI changes
 
-1. Read the current phase in [`doc/plan/phase.md`](../plan/phase.md)
-2. Implement **only** that phase's deliverables
-3. Meet **exit criteria** before moving on
-4. Update [`doc/plan/CHANGELOG.md`](../plan/CHANGELOG.md)
-5. Update docs:
-   - `doc/user/` — if end users see new behavior
-   - `doc/developer/` — if architecture or files change
+Add arguments in `cli/parser.py` and routing/output in `cli/cli.py`. Expose real
+behavior through domain functions rather than filesystem/database code in the
+parser. Test status, terminal output, and the resulting operation.
 
-### Phase 0 — done
+## Generated-code changes
 
-Repo layout, uv, maturin, PyO3, CI, pre-commit.
+Edit `project/templates/` assets. `template_engine.py` substitutes placeholders;
+`generator.py` handles destination creation/cleanup. Run project/settings and
+packaging tests because assets must work from installed wheels too.
 
-### Phase 1 — done
-
-`boltra --help`, `boltra --version`, CLI entry point, tests.
-
-### Phase 2 — done
-
-`boltra new <name>` — Rust clap parses, Python generates project files.
-
-### Phase 3 - done
-
-`boltra dev` - uvicorn dev server with reload.
-
-### Phase 4 - in progress
-
-Generated settings use pydantic-settings with `.env.example`.
-
-## Adding a feature checklist
-
-- [ ] Code in correct module (`cli`, `native`, future `project`, etc.)
-- [ ] Type hints + docstrings on public API
-- [ ] Tests in `tests/`
-- [ ] `uv lock` if dependencies changed
-- [ ] User doc update (`doc/user/`)
-- [ ] Developer doc update (`doc/developer/`)
-- [ ] Changelog entry (`doc/plan/CHANGELOG.md`)
-- [ ] Manual smoke test recorded in PR description
-
-Example smoke tests:
+For manual scaffolding into an existing parent directory:
 
 ```bash
-uv run boltra --version
-# Expected: 0.4.0
-
-uv run boltra new demo
-# Expected: creates demo/ with main.py, settings.py, pyproject.toml
-
-cd demo && uv run python -c "from main import app; print(app.title)"
-# Expected: Demo API
+uv run python -c "from pathlib import Path; from boltra.project import create_project; create_project('demo', cwd=Path('/tmp'))"
 ```
 
-## Rust + Python changes
+On Windows, use a path such as `Path('D:/sandbox')` for an existing parent.
+For the complete app workflow, install a separate tool with `uv tool install .`
+and follow the [quickstart](../user/quickstart.md).
 
-When touching both layers:
+## Dependencies
 
-1. Edit `crates/boltra-core/src/lib.rs`
-2. Update `src/boltra/_native.pyi` if Python API changes
-3. Update `src/boltra/native.py` if bridge logic changes
-4. `uv run maturin develop --uv`
-5. Run `tests/test_native.py` and `BOLTRA_DISABLE_NATIVE=1 uv run pytest`
-
-## Dependency changes
+Edit `pyproject.toml` and run:
 
 ```bash
-# Add a runtime dependency — edit pyproject.toml [project] dependencies
-# Add a dev dependency — edit [dependency-groups] dev
 uv lock
 uv sync --group dev
 ```
 
-## Documentation changes
+Commit the manifest/lock together. The CLI currently has no declared runtime
+dependencies; generated apps declare their dependencies in the template.
 
-| Change type | Update |
-|-------------|--------|
-| New CLI command | `doc/user/cli.md` |
-| New install step | `doc/user/installation.md` |
-| New file/module | `doc/developer/project-structure.md` |
-| Architecture shift | `doc/developer/architecture.md` |
-| Anything shipped | `doc/plan/CHANGELOG.md` |
+## Documentation
 
-## Getting help
+| Change | Update |
+|--------|--------|
+| Command, flag, error | User CLI guide and README |
+| Generated settings | User settings guide and file reference |
+| Module/file layout | File reference and directory map |
+| Runtime architecture | Architecture and user behavior |
+| Notable change | Changelog |
+| Verification run | Verification report |
 
-- Product spec: [`boltra-doc.md`](../../boltra-doc.md)
-- Roadmap: [`doc/plan/phase.md`](../plan/phase.md)
-- PR rules: [`CONTRIBUTING.md`](../../CONTRIBUTING.md)
+## Commits
+
+Use one relevant emoji with a conventional type:
+
+```text
+🐍 refactor: simplify Python project validation
+📚 docs: explain every generator template
+🧪 test: verify wheel installation without app dependencies
+```
+
+Explain the result and meaningful validation in the body. For incompatible APIs,
+use `!` and a `BREAKING CHANGE:` footer. See [CONTRIBUTING.md](../../CONTRIBUTING.md).

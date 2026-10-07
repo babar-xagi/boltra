@@ -1,93 +1,61 @@
-# CLI Reference
-
-Boltra provides a command-line interface for scaffolding and managing FastAPI projects.
+# CLI reference
 
 ## Invocation
 
 ```bash
-boltra [OPTIONS] COMMAND [ARGS]...
+boltra [OPTIONS] COMMAND [ARGS]
+python -m boltra [OPTIONS] COMMAND [ARGS]
 ```
 
-When developing from source, prefix with `uv run`:
+Both entry points use `boltra/cli/cli.py`. During contributor development, use
+`uv run boltra ...` from the Boltra checkout.
+
+## Help and version
 
 ```bash
-uv run boltra --help
-```
-
-## Global options
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--help` | | Show help message and exit |
-| `--version` | `-V` | Print version and exit |
-
-## Commands (current)
-
-### `boltra --help`
-
-Shows CLI name, tagline, and available commands. Native builds parse this with Rust clap; fallback builds use Python argparse.
-
-```bash
+boltra
 boltra --help
-```
-
-### `boltra --version`
-
-Prints the installed Boltra version, for example `0.4.0`.
-
-```bash
+boltra -h
 boltra --version
 boltra -V
+boltra new --help
+boltra dev --help
 ```
 
-### `boltra new <name>`
+No arguments show general help. Subcommand help describes only that command.
+The current checkout prints version `0.5.0`.
 
-Creates a minimal FastAPI project with direct FastAPI code, typed settings, and an `.env.example` file.
+## `boltra new <name>`
+
+Create a minimal FastAPI application:
 
 ```bash
 boltra new hello
 ```
 
-Generated layout:
+Produces `hello/main.py`, `hello/settings.py`, `hello/pyproject.toml`, and
+`hello/.env.example`. Names must start with an ASCII letter and contain only
+letters, digits, hyphens, or underscores. Examples: `hello`, `SchoolAPI`, `school_api`.
+Names containing dots, path separators, spaces, or trailing newlines are invalid.
 
-```text
-hello/
-|-- main.py
-|-- settings.py
-|-- pyproject.toml
-`-- .env.example
-```
-
-Rules:
-
-- Name must start with a letter
-- Only letters, digits, hyphens, and underscores allowed
-- Existing directories are never overwritten
-
-The generated `settings.py` loads environment variables and `.env` values through `pydantic-settings` when installed, with a small import fallback for first-run friendliness.
-
-Example output:
-
-```text
-Created project 'hello' in /path/to/hello
+An existing destination is never overwritten. Filesystem failures produce a
+readable error; failed writes attempt to remove only the generated partial files.
+Unrelated files are preserved.
 
 Next steps:
-  cd hello
-  uv sync                    # creates a local .venv
-  boltra dev                 # start server with reload
-```
-
-### `boltra dev`
-
-Runs the FastAPI development server with auto-reload. It must be run inside a Boltra project with `[tool.boltra]` in `pyproject.toml`.
 
 ```bash
 cd hello
 uv sync
+cp .env.example .env
 boltra dev
 ```
 
-Reads from `pyproject.toml`:
+## `boltra dev`
+
+Find the nearest parent directory containing a non-empty `[tool.boltra]` table,
+read its settings, and launch Uvicorn with automatic Python-source reload.
+The command works from a project subdirectory as well as its root.
 
 ```toml
 [tool.boltra]
@@ -98,40 +66,60 @@ host = "127.0.0.1"
 port = 8000
 ```
 
-Prints mode, app path, URL, and docs URL, then runs:
+| Key | Default | Behavior |
+|-----|---------|----------|
+| `app` | `main:app` | Uvicorn target; dotted modules and attributes are supported |
+| `host` | `127.0.0.1` | Non-empty bind host |
+| `port` | `8000` | Integer from 1 to 65535; boolean/string values are rejected |
+| `mode` | `fastapi-kit` | Label printed in the startup banner |
+| `settings` | `settings.py` | Project metadata; generated `main.py` imports settings directly |
 
-```bash
-uv run uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+The launcher prefers the project's `.venv` Python. If no venv exists and uv is
+available, it launches through `uv run`. Otherwise it asks you to run `uv sync`.
+The virtualenv is excluded from reload watching.
+
+Startup prints the app URL, documentation URL, mode, and import target. IPv6
+hosts are shown as bracketed URLs, for example `http://[::1]:8000/docs`.
+Configuration accepts UTF-8 with or without a BOM.
+
+Restart after changing `.env` or `pyproject.toml`. On Windows, a Python runner
+avoids unreliable console reload signals by terminating the old worker.
+Development shutdown hooks are not guaranteed on Windows; production should
+run ordinary Uvicorn without reload.
+
+## Exit statuses
+
+| Status | Meaning |
+|--------|---------|
+| `0` | Successful command, help, or version |
+| `1` | Generation/configuration/environment/launch failure |
+| `2` | Invalid CLI usage or arguments |
+| `130` | Ctrl+C handled by the Boltra launcher |
+
+The dev command otherwise returns its server subprocess's exit status.
+
+## Programmatic use
+
+```python
+from pathlib import Path
+from boltra.cli import execute, parse_argv
+
+command = parse_argv(["new", "hello"])
+assert command.action == "new"
+exit_code = execute(["new", "hello"], cwd=Path("/tmp"))
 ```
 
-Open:
+For application code, use the generator directly:
 
-- App: http://127.0.0.1:8000/
-- Swagger docs: http://127.0.0.1:8000/docs
+```python
+from pathlib import Path
+from boltra.project import create_project
 
-If port 8000 is already in use, change `port` in `[tool.boltra]` and run
-`boltra dev` again.
+project = create_project("hello", cwd=Path("/tmp"))
+```
 
-### `boltra` (no arguments)
+## Planned commands
 
-With no subcommand, shows help.
-
-## Commands (planned)
-
-| Command | Phase | Description |
-|---------|-------|-------------|
-| `boltra add app <name>` | 5 | Add an app module |
-| `boltra remove app <name>` | 6 | Remove an app module safely |
-| `boltra doctor` | early hardening | Check project configuration and environment health |
-| `boltra add orm` | 9+ | Add async ORM |
-| `boltra add admin` | 22+ | Add admin dashboard |
-
-See the [phased roadmap](../plan/phase.md) for the full schedule.
-
-## Environment variables
-
-| Variable | Values | Effect |
-|----------|--------|--------|
-| `BOLTRA_DISABLE_NATIVE` | `1`, `true`, `yes`, `on` | Disable Rust native extension; use Python fallback |
-
-This is mainly for testing and unsupported platforms. End users normally do not need to set it.
+`add app`, `remove app`, router auto-discovery, ORM/migrations, admin, auth,
+workers, and AI are roadmap items. The current parser does not accept them.
+See the [roadmap](../plan/phase.md).

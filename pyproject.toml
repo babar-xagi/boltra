@@ -1,21 +1,20 @@
 [project]
 name = "boltra"
-version = "0.4.0"
-description = "FastAPI development kit with Rust-powered performance modules"
+version = "0.5.0"
+description = "A Python development toolkit for creating and running FastAPI projects"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 authors = [{ name = "Boltra Contributors" }]
-keywords = ["fastapi", "cli", "orm", "async", "rust"]
+keywords = ["fastapi", "cli", "scaffolding", "async", "python"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "Programming Language :: Rust",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
 ]
@@ -27,28 +26,48 @@ Documentation = "https://github.com/babar-xagi/boltra/tree/main/doc"
 Changelog = "https://github.com/babar-xagi/boltra/blob/main/doc/plan/CHANGELOG.md"
 
 [project.scripts]
-boltra = "boltra.cli.main:run"
+boltra = "boltra.cli.cli:run"
 
 [dependency-groups]
 dev = [
     "fastapi>=0.115",
-    "maturin>=1.8",
     "mypy>=1.14",
+    "pydantic-settings>=2.6",
     "pre-commit>=4.0",
     "pytest>=8.3",
     "pytest-asyncio>=0.25",
+    "pytest-cov>=7.0",
     "ruff>=0.9",
+    "uvicorn[standard]>=0.27",
 ]
 
 [build-system]
-requires = ["maturin>=1.8,<2"]
-build-backend = "maturin"
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
 
-[tool.maturin]
-manifest-path = "crates/boltra-core/Cargo.toml"
-module-name = "boltra._native"
-python-source = "src"
-features = ["pyo3/extension-module", "pyo3/abi3-py312"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/boltra"]
+
+# Limit source archives to maintained files; nested .env.example ignore rules
+# must never pull temporary generated apps into a published distribution.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/doc",
+    "/benchmarks/README.md",
+    "/README.md",
+    "/CONTRIBUTING.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/uv.lock",
+    "/boltra-doc.md",
+    "/.github",
+    "/.gitignore",
+    "/.gitattributes",
+    "/.pre-commit-config.yaml",
+]
+exclude = ["**/__pycache__/**", "**/*.pyc"]
 
 [tool.ruff]
 target-version = "py312"
@@ -76,4 +95,5 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: integration tests that start external processes",
+    "packaging: build and inspect the distributable Python package",
 ]

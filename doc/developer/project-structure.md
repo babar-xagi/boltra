@@ -1,121 +1,81 @@
-# Project Structure
+# Repository structure
 
-Complete map of the Boltra repository as of Phase 4.
+Source is grouped by responsibility. Environments, caches, and build outputs are
+ignored local artifacts.
 
 ```text
 boltra/
-├── .cargo/
-│   └── config.toml              # PYO3_USE_ABI3_FORWARD_COMPATIBILITY for Python 3.14
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # uv + maturin + ruff + mypy + pytest + cargo test
-├── .pre-commit-config.yaml      # ruff, mypy, file hygiene hooks
-├── benchmarks/
-│   └── README.md                # Placeholder for ORM benchmarks (Phase 9+)
-├── boltra-doc.md                # Product vision and full specification
-├── Cargo.toml                   # Rust workspace root + release profile
-├── Cargo.lock                   # Locked Rust dependencies
-├── CONTRIBUTING.md              # PR rules and quality gates
-├── crates/
-│   ├── boltra-cli/
-│   │   ├── Cargo.toml           # clap CLI parser crate
-│   │   └── src/lib.rs           # Cli, Commands, parse_args(), name validation
-│   └── boltra-core/
-│       ├── Cargo.toml           # PyO3 cdylib + boltra-cli dependency
-│       └── src/lib.rs           # _native module, parse_argv PyO3 bridge
+├── .github/workflows/
+│   ├── ci.yml                    # Python quality/test matrix
+│   └── publish.yml               # Python build and publication
+├── .pre-commit-config.yaml       # Lint, types, file hygiene
+├── benchmarks/README.md          # Future Python benchmark conventions
 ├── doc/
-│   ├── README.md                # Documentation index
-│   ├── developer/               # Contributor docs (this folder)
-│   ├── plan/
-│   │   ├── phase.md             # Phased roadmap
-│   │   └── CHANGELOG.md         # Shipped changes log
-│   └── user/                    # End-user docs
-├── LICENSE                      # MIT
-├── pyproject.toml               # Python project + maturin + tooling config
-├── README.md                    # Project overview
-├── src/
-│   └── boltra/
-│       ├── __init__.py          # Package version, re-exports native helpers
-│       ├── _native.pyi          # Type stubs for Rust module (mypy)
-│       ├── native.py            # Rust bridge + BOLTRA_DISABLE_NATIVE fallback
-│       ├── cli/
-│       │   ├── __init__.py      # Exports execute, parse_argv, run
-│       │   ├── main.py          # Console entry point
-│       │   ├── parser.py        # clap native + argparse fallback
-│       │   └── dispatch.py    # Route parsed commands to handlers
-│       └── project/
-│           ├── __init__.py
-│           ├── generator.py     # create_project()
-│           └── templates.py     # main.py, settings.py, .env.example, pyproject.toml
+│   ├── README.md                 # Documentation index
+│   ├── user/                     # Installation, quickstart, CLI, settings
+│   ├── developer/                # Architecture, files, workflow, tests, release
+│   └── plan/                     # Roadmap, changelog, migration ideas
+├── src/boltra/
+│   ├── __init__.py               # Package version
+│   ├── __main__.py               # python -m boltra
+│   ├── py.typed                  # Published typing marker
+│   ├── cli/
+│   │   ├── __init__.py            # Public CLI exports
+│   │   ├── cli.py                # Entry point and command handlers
+│   │   └── parser.py             # argparse and ParsedCommand
+│   ├── project/
+│   │   ├── __init__.py            # Public generator exports
+│   │   ├── generator.py          # Creation and partial-write cleanup
+│   │   ├── validation.py         # Shared name rules
+│   │   ├── template_engine.py    # Resource loading/substitution
+│   │   └── templates/
+│   │       ├── main.py.tmpl       # Direct FastAPI app
+│   │       ├── settings.py.tmpl   # Settings/environment support
+│   │       ├── pyproject.toml.tmpl # App dependencies/server metadata
+│   │       └── env.example.tmpl   # Environment example
+│   └── dev/
+│       ├── __init__.py            # Public config/server exports
+│       ├── config.py             # TOML and project discovery
+│       ├── server.py             # Environment selection/Uvicorn launch
+│       └── windows.py            # Windows reload bootstrap
 ├── tests/
 │   ├── __init__.py
-│   ├── test_cli.py              # CLI parse + dispatch tests
-│   ├── test_native.py           # Native bridge and fallback tests
-│   └── test_project.py          # boltra new integration tests
-├── uv.lock                      # Locked Python dependencies
-└── .gitignore
+│   ├── cli/
+│   │   ├── __init__.py
+│   │   └── test_cli.py
+│   ├── project/
+│   │   ├── __init__.py
+│   │   ├── test_generator.py
+│   │   └── test_settings.py
+│   ├── dev/
+│   │   ├── __init__.py
+│   │   ├── test_config.py
+│   │   ├── test_server.py
+│   │   └── test_integration.py
+│   └── test_package.py
+├── .gitattributes                 # Consistent text line endings
+├── .gitignore
+├── boltra-doc.md                  # Product direction
+├── CONTRIBUTING.md               # Contributor and commit conventions
+├── LICENSE                       # MIT
+├── pyproject.toml                 # Metadata/build/tooling
+├── README.md                      # Overview and quickstart
+└── uv.lock                       # Locked Python dependencies
 ```
 
-## File reference by layer
+`__init__.py` files make module/test boundaries explicit. Future command-specific
+logic can move into additional `cli/` modules when complexity warrants it; the
+current commands are easy to follow in `cli.py`.
 
-### Root config
+## Local artifacts
 
-| File | Purpose |
-|------|---------|
-| `pyproject.toml` | Package metadata, `[project.scripts]`, maturin config, ruff/mypy/pytest |
-| `Cargo.toml` | Workspace members (`boltra-cli`, `boltra-core`), `pyo3` + `clap`, release LTO |
-| `uv.lock` | Reproducible Python env via uv |
-| `.pre-commit-config.yaml` | Local git hooks |
+| Directory | Purpose |
+|-----------|---------|
+| `.venv/` | Editable contributor environment |
+| `.uv/` | Download/test caches and isolated verification environments |
+| `dist/`, `build/` | Distribution/build output |
+| `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/` | Tool caches |
+| `__pycache__/` | Python bytecode |
 
-### Python (`src/boltra/`)
-
-| File | Created | Purpose |
-|------|---------|---------|
-| `__init__.py` | Phase 0 | `__version__`, `is_available()`, `native_version()` |
-| `native.py` | Phase 0 | Lazy import of `boltra._native`, env-based disable |
-| `_native.pyi` | Phase 0 | Static types for the maturin-built extension |
-| `cli/parser.py` | Phase 2 | `parse_argv()` — clap via PyO3 or argparse fallback |
-| `cli/dispatch.py` | Phase 2 | `execute()` — help, version, `new` handler |
-| `cli/main.py` | Phase 1 | `run()` console entry point |
-| `project/generator.py` | Phase 2 | `create_project()`, collision checks |
-| `project/templates.py` | Phase 2-4 | Generated file templates, including settings and `.env.example` |
-
-### Rust
-
-| Crate / file | Created | Purpose |
-|--------------|---------|---------|
-| `boltra-cli/src/lib.rs` | Phase 2 | clap `Cli`, `Commands::New`, `parse_args()` |
-| `boltra-core/src/lib.rs` | Phase 0–2 | PyO3 `_native`: `parse_argv`, `cli_help`, `version` |
-
-### Tests (`tests/`)
-
-| File | Covers |
-|------|--------|
-| `test_native.py` | Extension import, `parse_argv`, env disable, fallback |
-| `test_cli.py` | Help, version, clap parse, entry point |
-| `test_project.py` | File generation, settings import, `.env` loading, collisions, CLI integration |
-
-### Documentation (`doc/`)
-
-| Path | Audience |
-|------|----------|
-| `doc/user/` | Installation, CLI usage |
-| `doc/developer/` | Architecture, structure, tooling |
-| `doc/plan/` | Roadmap and changelog |
-
-## What gets generated at build time
-
-| Output | Tool | Location |
-|--------|------|----------|
-| `boltra._native*.pyd` / `.so` | maturin | Inside `.venv` site-packages |
-| `target/` | cargo | Rust build artifacts (gitignored) |
-| `.venv/` | uv | Virtual environment (gitignored) |
-
-## Phases and files
-
-When a new phase lands, update:
-
-1. This file (or add a phase note)
-2. `doc/plan/CHANGELOG.md`
-3. `doc/user/` if user-facing behavior changes
-4. `tests/` for new public APIs
+These directories do not belong in commits or source archives. The
+[file reference](file-reference.md) explains each maintained file in detail.

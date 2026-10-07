@@ -4,7 +4,36 @@ All notable changes to Boltra are documented here. Entries follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the phased roadmap
 in [`phase.md`](phase.md).
 
-## [Unreleased]
+## [Unreleased] — 0.5.0
+
+### Changed
+
+- Migrated the package to pure Python: argparse CLI, Hatchling build backend,
+  platform-independent wheel, and no project-owned native extension/toolchain.
+- Moved CLI implementation to `cli/cli.py` and shared name validation to
+  `project/validation.py`; removed old native APIs and internal CLI entry modules.
+- Extracted generated code into readable packaged template assets.
+- Organized tests by CLI, project, and dev-server responsibility.
+- Rewrote README/user/developer guides with examples and a detailed file reference.
+- Replaced native CI/publication steps with Python quality/test/build workflows.
+
+### Fixed
+
+- Reject trailing-newline project names and preserve validation details.
+- Return subcommand help/errors once, with the correct message and exit status.
+- Honor fallback settings list/boolean overrides and reject invalid booleans.
+- Accept packaged app targets and handle invalid UTF-8 configuration.
+- Format IPv6 URLs and handle filesystem/process-launch failures cleanly.
+- Clean partial generated files without deleting unrelated content.
+- Make Windows development reload restart only its worker, avoiding signal hangs.
+
+### Added
+
+- `python -m boltra` and the published `py.typed` marker.
+- Installed-wheel, resource, and source-archive verification tests.
+- Pydantic/Uvicorn/coverage development dependencies and real repeated-reload tests.
+
+Older entries below describe the historical implementations of those releases.
 
 ## [0.4.0] - 2026-06-29
 

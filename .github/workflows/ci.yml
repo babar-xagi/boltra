@@ -1,4 +1,4 @@
-name: CI
+name: Python quality checks
 
 on:
   push:
@@ -6,57 +6,36 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.12", "3.13", "3.14"]
-        exclude:
-          # Keep matrix lean: spread versions across OSes.
-          - os: windows-latest
-            python-version: "3.12"
-          - os: windows-latest
-            python-version: "3.13"
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          prune-cache: false
-
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-
-      - name: Install dependencies (maturin builds PyO3 extension)
-        run: uv sync --group dev
-        env:
-          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: "1"
-
-      - name: Ruff lint
-        run: uv run ruff check .
-
-      - name: Ruff format
-        run: uv run ruff format --check .
-
-      - name: Mypy
-        run: uv run mypy src
-
-      - name: Pytest
-        run: uv run pytest
-
-      - name: Pytest with native disabled
-        run: uv run pytest -k native_disabled
-        env:
-          BOLTRA_DISABLE_NATIVE: "1"
-
-      - name: Cargo test
-        run: cargo test --workspace
+          python-version: ${{ matrix.python-version }}
+      - name: Install locked development environment
+        run: uv sync --locked --group dev
+      - name: Lint
+        run: |
+          uv run --no-sync ruff check .
+          uv run --no-sync ruff check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl
+      - name: Formatting
+        run: |
+          uv run --no-sync ruff format --check .
+          uv run --no-sync ruff format --check --extension tmpl:python src/boltra/project/templates/main.py.tmpl src/boltra/project/templates/settings.py.tmpl
+      - name: Types
+        run: uv run --no-sync mypy src
+      - name: Tests, HTTP integration, and packaging
+        run: uv run --no-sync pytest
+      - name: Build wheel and source distribution
+        run: uv build

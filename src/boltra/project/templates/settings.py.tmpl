@@ -1,47 +1,16 @@
-"""File templates for generated Boltra projects."""
+"""Application settings for this Boltra project."""
 
 from __future__ import annotations
 
-
-def display_title(name: str) -> str:
-    """Build a human-readable API title from a project slug."""
-    words = name.replace("_", " ").replace("-", " ")
-    return f"{words.title()} API"
-
-
-def main_py(name: str) -> str:
-    """Return the generated main.py source."""
-    return """from fastapi import FastAPI
-
-from settings import settings
-
-app = FastAPI(
-    title=settings.api_title,
-    version="0.1.0",
-    debug=settings.debug,
-)
-
-
-@app.get("/")
-async def home():
-    return {"message": "Hello from FastAPI + Boltra Kit"}
-"""
-
-
-def settings_py(name: str) -> str:
-    """Return the generated settings.py source."""
-    title = display_title(name)
-    return f'''"""Application settings for this Boltra project."""
-
-from __future__ import annotations
-
-from functools import lru_cache
 import json
 import os
+import warnings
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
-import warnings
 
+# uv sync installs Pydantic settings. The fallback supports a first import
+# before dependencies are installed; normal application use follows Pydantic.
 try:
     from pydantic import Field
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -64,6 +33,7 @@ else:
     _HAS_PYDANTIC_SETTINGS = True
 
 
+# Resolve .env beside this file, even when commands run from another directory.
 _ENV_FILE = Path(__file__).with_name(".env")
 _DEFAULT_SECRET_KEY = "change-this-secret-key"
 _DEFAULT_ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
@@ -72,9 +42,9 @@ _DEFAULT_ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 def _read_env_file(path: Path) -> dict[str, str]:
     """Read simple KEY=VALUE pairs from .env for the import fallback."""
     if not path.is_file():
-        return {{}}
+        return {}
 
-    values: dict[str, str] = {{}}
+    values: dict[str, str] = {}
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -88,15 +58,18 @@ def _raw_value(env: dict[str, str], key: str, default: Any) -> Any:
     return os.environ.get(key, env.get(key, default))
 
 
-def _bool_value(env: dict[str, str], key: str, default: bool) -> bool:
-    raw = _raw_value(env, key, default)
+def _bool_value(raw: Any) -> bool:
     if isinstance(raw, bool):
         return raw
-    return str(raw).lower() in {{"1", "true", "yes", "on"}}
+    value = str(raw).lower()
+    if value in {"1", "true", "yes", "on", "y", "t"}:
+        return True
+    if value in {"0", "false", "no", "off", "n", "f"}:
+        return False
+    raise ValueError(f"invalid boolean value: {raw!r}")
 
 
-def _list_value(env: dict[str, str], key: str, default: list[str]) -> list[str]:
-    raw = _raw_value(env, key, default)
+def _list_value(raw: Any, default: list[str]) -> list[str]:
     if isinstance(raw, list):
         return list(raw)
     if not raw:
@@ -124,8 +97,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "{name}"
-    api_title: str = "{title}"
+    app_name: str = "$project_name"
+    api_title: str = "$api_title"
     debug: bool = True
     secret_key: str = _DEFAULT_SECRET_KEY
     allowed_hosts: list[str] = Field(
@@ -140,13 +113,13 @@ class Settings(BaseSettings):
     payments_enabled: bool = False
     boltra_mode: str = "fastapi-kit"
     api_engine: str = "fastapi"
-    native_modules: bool = False
 
     def __init__(self, **values: Any) -> None:
         if _HAS_PYDANTIC_SETTINGS:
             super().__init__(**values)
             return
 
+        # Explicit arguments override environment variables, then .env defaults.
         env = _read_env_file(_ENV_FILE)
         self.app_name = str(
             values.get("app_name", _raw_value(env, "APP_NAME", self.app_name))
@@ -154,41 +127,53 @@ class Settings(BaseSettings):
         self.api_title = str(
             values.get("api_title", _raw_value(env, "API_TITLE", self.api_title))
         )
-        self.debug = bool(values.get("debug", _bool_value(env, "DEBUG", self.debug)))
+        self.debug = _bool_value(
+            values.get("debug", _raw_value(env, "DEBUG", self.debug))
+        )
         self.secret_key = str(
             values.get("secret_key", _raw_value(env, "SECRET_KEY", self.secret_key))
         )
-        self.allowed_hosts = _list_value(env, "ALLOWED_HOSTS", self.allowed_hosts)
-        self.installed_apps = _list_value(env, "INSTALLED_APPS", self.installed_apps)
+        self.allowed_hosts = _list_value(
+            values.get(
+                "allowed_hosts", _raw_value(env, "ALLOWED_HOSTS", self.allowed_hosts)
+            ),
+            self.allowed_hosts,
+        )
+        self.installed_apps = _list_value(
+            values.get(
+                "installed_apps", _raw_value(env, "INSTALLED_APPS", self.installed_apps)
+            ),
+            self.installed_apps,
+        )
         self.database_url = values.get(
             "database_url",
             _optional_value(env, "DATABASE_URL"),
         )
-        self.auth_enabled = bool(
+        self.auth_enabled = _bool_value(
             values.get(
                 "auth_enabled",
-                _bool_value(env, "AUTH_ENABLED", self.auth_enabled),
+                _raw_value(env, "AUTH_ENABLED", self.auth_enabled),
             )
         )
-        self.admin_enabled = bool(
+        self.admin_enabled = _bool_value(
             values.get(
                 "admin_enabled",
-                _bool_value(env, "ADMIN_ENABLED", self.admin_enabled),
+                _raw_value(env, "ADMIN_ENABLED", self.admin_enabled),
             )
         )
-        self.ai_enabled = bool(
-            values.get("ai_enabled", _bool_value(env, "AI_ENABLED", self.ai_enabled))
+        self.ai_enabled = _bool_value(
+            values.get("ai_enabled", _raw_value(env, "AI_ENABLED", self.ai_enabled))
         )
-        self.worker_enabled = bool(
+        self.worker_enabled = _bool_value(
             values.get(
                 "worker_enabled",
-                _bool_value(env, "WORKER_ENABLED", self.worker_enabled),
+                _raw_value(env, "WORKER_ENABLED", self.worker_enabled),
             )
         )
-        self.payments_enabled = bool(
+        self.payments_enabled = _bool_value(
             values.get(
                 "payments_enabled",
-                _bool_value(env, "PAYMENTS_ENABLED", self.payments_enabled),
+                _raw_value(env, "PAYMENTS_ENABLED", self.payments_enabled),
             )
         )
         self.boltra_mode = str(
@@ -196,12 +181,6 @@ class Settings(BaseSettings):
         )
         self.api_engine = str(
             values.get("api_engine", _raw_value(env, "API_ENGINE", self.api_engine))
-        )
-        self.native_modules = bool(
-            values.get(
-                "native_modules",
-                _bool_value(env, "NATIVE_MODULES", self.native_modules),
-            )
         )
 
 
@@ -221,6 +200,7 @@ if settings.secret_key == _DEFAULT_SECRET_KEY:
         stacklevel=2,
     )
 
+# Uppercase aliases preserve the familiar settings-file style for future apps.
 APP_NAME = settings.app_name
 API_TITLE = settings.api_title
 DEBUG = settings.debug
@@ -229,61 +209,13 @@ ALLOWED_HOSTS = settings.allowed_hosts
 INSTALLED_APPS = settings.installed_apps
 DATABASE = settings.database_url
 
-AUTH = {{"ENABLED": settings.auth_enabled}}
-ADMIN = {{"ENABLED": settings.admin_enabled}}
-AI = {{"ENABLED": settings.ai_enabled}}
-WORKER = {{"ENABLED": settings.worker_enabled}}
-PAYMENTS = {{"ENABLED": settings.payments_enabled}}
+AUTH = {"ENABLED": settings.auth_enabled}
+ADMIN = {"ENABLED": settings.admin_enabled}
+AI = {"ENABLED": settings.ai_enabled}
+WORKER = {"ENABLED": settings.worker_enabled}
+PAYMENTS = {"ENABLED": settings.payments_enabled}
 
-BOLTRA = {{
+BOLTRA = {
     "MODE": settings.boltra_mode,
     "API_ENGINE": settings.api_engine,
-    "NATIVE_MODULES": settings.native_modules,
-}}
-'''
-
-
-def env_example(name: str) -> str:
-    """Return the generated .env.example content."""
-    title = display_title(name)
-    return f"""APP_NAME={name}
-API_TITLE={title}
-DEBUG=true
-SECRET_KEY=change-this-secret-key
-ALLOWED_HOSTS=["localhost","127.0.0.1"]
-DATABASE_URL=
-
-AUTH_ENABLED=false
-ADMIN_ENABLED=false
-AI_ENABLED=false
-WORKER_ENABLED=false
-PAYMENTS_ENABLED=false
-
-BOLTRA_MODE=fastapi-kit
-API_ENGINE=fastapi
-NATIVE_MODULES=false
-"""
-
-
-def pyproject_toml(name: str) -> str:
-    """Return the generated ``pyproject.toml`` source."""
-    return f'''[project]
-name = "{name}"
-version = "0.1.0"
-requires-python = ">=3.12"
-dependencies = [
-    "fastapi>=0.115",
-    "pydantic-settings>=2.6",
-    "uvicorn[standard]>=0.27",
-]
-
-[tool.boltra]
-mode = "fastapi-kit"
-app = "main:app"
-settings = "settings.py"
-host = "127.0.0.1"
-port = 8000
-# Boltra CLI is used to scaffold and manage this project.
-# Add `boltra` as a dependency when it is published or install from source:
-#   uv add boltra --path ../path/to/boltra
-'''
+}

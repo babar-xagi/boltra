@@ -1,78 +1,66 @@
-# Releasing Boltra
+# Releasing the Python package
 
-## Versioning
+## Version and compatibility
 
-- Python: `pyproject.toml` → `[project].version`
-- Rust workspace: `Cargo.toml` → `[workspace.package].version`
-- Package: `src/boltra/__init__.py` → `__version__`
+Keep `[project].version` in `pyproject.toml` aligned with `__version__` in
+`src/boltra/__init__.py`. Update the changelog and examples before tagging.
 
-Keep all three in sync. Tag format: `v0.3.0`.
+Version 0.5.0 moves to Python-only builds. The old native helper API and internal
+`cli.main` / `cli.dispatch` modules are removed. Import CLI functions from
+`boltra.cli`. Command names remain `new`, `dev`, help, and version.
 
-## GitHub
-
-### First-time setup
-
-1. Create a repository on GitHub (e.g. `babar-xagi/boltra`).
-2. Push the `main` branch:
-
-   ```bash
-   git remote add origin https://github.com/babar-xagi/boltra.git
-   git push -u origin main
-   ```
-
-### GitHub Release
-
-1. Create a tag: `git tag v0.3.0`
-2. Push tag: `git push origin v0.3.0`
-3. On GitHub → **Releases** → **Draft a new release** → select tag `v0.3.0`
-4. Publish release → triggers `.github/workflows/publish.yml`
-
-## PyPI
-
-Package name: **`boltra`** (verified available).
-
-### One-time PyPI setup
-
-1. Create account at [pypi.org](https://pypi.org)
-2. Create API token (scope: entire account or project `boltra`)
-3. Add token to GitHub repo → **Settings** → **Secrets** → `PYPI_API_TOKEN`
-
-### Manual publish (local)
+## Validate and build
 
 ```bash
-# Build release wheels (Windows example)
-uv run maturin build --release
-
-# Upload (requires PyPI token)
-$env:MATURIN_PYPI_TOKEN = "<your-token>"
-uv run maturin upload --non-interactive dist/*
-```
-
-Or with uv:
-
-```bash
+uv sync --locked --group dev
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src
+uv run pytest
+uv run pre-commit run --all-files
 uv build
-uv publish --token <your-token>
 ```
 
-### Install from PyPI (after publish)
+Outputs:
+
+```text
+dist/boltra-0.5.0-py3-none-any.whl
+dist/boltra-0.5.0.tar.gz
+```
+
+One wheel covers supported platforms. Packaging tests verify its tag, typing
+marker, templates, entry point, and clean installation. Source archive checks
+reject unwanted development caches and native artifacts.
+
+## Wheel smoke test
 
 ```bash
-pip install boltra
-# or
-uv add boltra
-boltra --version
+uv venv /tmp/boltra-release-check
+uv pip install --python /tmp/boltra-release-check/bin/python dist/boltra-0.5.0-py3-none-any.whl
+/tmp/boltra-release-check/bin/python -m boltra --version
 ```
 
-> **Note:** Wheels include the Rust PyO3 extension. Platforms without a matching wheel
-> fall back to pure-Python CLI parsing (native acceleration disabled).
+On Windows, use a temporary path and `Scripts/python.exe` instead of `bin/python`.
+Do not commit release-check environments.
 
-## Pre-release checklist
+## Publish
 
-- [ ] `uv run pytest`
-- [ ] `uv run ruff check .`
-- [ ] `uv run mypy src`
-- [ ] `cargo test --workspace`
-- [ ] Version bumped in `pyproject.toml`, `Cargo.toml`, `__init__.py`
-- [ ] `doc/plan/CHANGELOG.md` updated
-- [ ] Tag pushed and GitHub Release published
+The workflow runs on `v*` tags or manual dispatch. It validates, builds, saves
+artifacts, and publishes using the configured `PYPI_API_TOKEN` secret. There is
+no native compilation or platform wheel matrix.
+
+When the maintainer is ready to publish a verified release:
+
+```bash
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+For manual publication with credentials provided through the environment:
+
+```bash
+uv publish dist/*
+```
+
+A commit/build does not publish anything. Keep credentials out of source and
+commit messages.

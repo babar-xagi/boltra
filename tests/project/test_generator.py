@@ -10,7 +10,7 @@ from types import ModuleType
 
 import pytest
 
-from boltra.cli.dispatch import execute
+from boltra.cli import execute
 from boltra.project.generator import ProjectError, create_project
 
 
@@ -166,3 +166,33 @@ def test_cli_new_existing_dir_errors(
 
     assert code == 1
     assert "already exists" in err
+
+
+def test_cli_new_filesystem_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Filesystem failures should return a useful CLI error."""
+
+    def denied(*args: object, **kwargs: object) -> None:
+        raise PermissionError("write denied")
+
+    monkeypatch.setattr(Path, "mkdir", denied)
+    assert execute(["new", "demo"], cwd=tmp_path) == 1
+    assert "write denied" in capsys.readouterr().err
+
+
+def test_create_project_cleans_partial_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A write failure leaves no partial project blocking a retry."""
+    original = Path.write_text
+
+    def fail_settings(self: Path, data: str, **kwargs: object) -> int:
+        if self.name == "settings.py":
+            raise OSError("disk full")
+        return original(self, data, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(Path, "write_text", fail_settings)
+    with pytest.raises(ProjectError, match="disk full"):
+        create_project("demo", cwd=tmp_path)
+    assert not (tmp_path / "demo").exists()

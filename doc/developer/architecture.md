@@ -1,94 +1,89 @@
 # Architecture
 
-## Overview
+## Runtime boundaries
 
-Boltra is a **monorepo** combining:
+Boltra is a Python development tool. Its CLI, generator, configuration loader,
+and process launcher use the standard library. The package has no declared
+runtime dependencies. Generated apps install their own FastAPI, Pydantic-settings,
+and Uvicorn dependencies.
 
-- A **Python package** (`boltra`) — CLI, project tooling, ORM (later), batteries
-- A **Rust workspace** (`crates/`) — PyO3 native extensions for hot paths
-- **maturin** — builds and ships the Rust extension as `boltra._native`
+The CLI can scaffold before an app environment exists. An app can also run through
+ordinary Uvicorn without importing Boltra.
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                     User / Developer                     │
-│                    `boltra` CLI (clap + Python)                  │
-└─────────────────────────┬───────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────┐
-│              Python package (src/boltra/)                │
-│  cli/ · native.py · (future: project, orm, apps, …)   │
-└─────────────┬───────────────────────┬───────────────────┘
-              │                       │
-              │ import (optional)     │ pure Python fallback
-              ▼                       ▼
-┌─────────────────────────┐   ┌──────────────────────────┐
-│  boltra._native (PyO3)  │   │  Python implementations  │
-│  crates/boltra-core     │   │  (always available)      │
-└─────────────────────────┘   └──────────────────────────┘
+Terminal / python -m boltra
+         |
+         v
+cli/cli.py: run() -> execute(argv)
+         |
+         v
+cli/parser.py: argparse -> ParsedCommand
+         |
+         +---- help/version/error -> terminal output
+         |
+         +---- new -> project/generator.py
+         |                 +-> validation.py
+         |                 +-> template_engine.py -> templates/*
+         |
+         +---- dev -> dev/config.py -> dev/server.py
+                                      +-> project .venv Python, or uv run
+                                      +-> Uvicorn / Windows runner
 ```
 
-## Design decisions
+## CLI
 
-### uv + maturin + PyO3
+The parser does not print or exit the interpreter. Its custom `ArgumentParser`
+catches help/errors as internal exceptions and returns a frozen `ParsedCommand`.
+`cli.py` owns routing and output. `run()` translates `execute()`'s integer result
+into `SystemExit`; tests can invoke `execute()` with a selected working directory.
 
-| Choice | Why |
-|--------|-----|
-| **uv** | Fast dependency resolution and reproducible lockfile (`uv.lock`) |
-| **maturin** | Standard way to build PyO3 extensions; editable dev builds |
-| **PyO3 0.28** | Mature Python ↔ Rust FFI; extension module for performance |
+Project-name rules live in `project/validation.py`. The generator and parser share
+that validator, without the project package depending on the CLI. The parser
+adapts `ValueError` to argparse's argument error to preserve useful details.
 
-### Native bridge pattern
+## Generation
 
-`boltra.native` is the **single entry point** for checking whether Rust acceleration is active:
+`create_project()` validates the name, rejects existing paths/symlinks, creates a
+directory, and writes four rendered templates as UTF-8 with LF endings. Failed
+writes trigger cleanup of only the attempted generated files and empty directory.
+Other files are preserved.
 
-```python
-from boltra.native import is_available, native_version
-```
+Readable assets live in `project/templates/`. The template engine loads them with
+`importlib.resources` and substitutes `$project_name` and `$api_title` through
+`string.Template`. Python/JSON braces remain ordinary source, avoiding nested
+formatting escapes. Resources work from editable checkouts and installed wheels.
 
-Rules:
+## Settings
 
-- Try `import boltra._native` once; cache the result
-- Respect `BOLTRA_DISABLE_NATIVE` for tests and fallback verification
-- Log once at INFO if native is missing; never crash the app
+The generated Pydantic settings class resolves explicit arguments, environment
+variables, `.env`, then defaults. It resolves `.env` beside itself, caches a
+settings object, warns about the default secret, and exports uppercase aliases.
+A small fallback supports a first import before dependencies are installed.
 
-Future ORM code will follow the same pattern: delegate to `_native` when `is_available()`, else use Python.
+Feature flags and database URL are placeholders. They do not activate planned
+apps, ORM, auth, or workers.
 
-### CLI layer
+## Server
 
-The CLI is split between Rust clap parsing and Python command execution. `boltra.cli.parser` uses `boltra._native.parse_argv()` when the PyO3 extension is available, and mirrors the same commands with argparse as a fallback.
+The configuration loader walks upward to the nearest `[tool.boltra]` table. It
+parses TOML rather than executing a Python settings file, validates app target,
+host, and port, and accepts UTF-8 with or without a BOM.
 
-Entry point (in `pyproject.toml`):
+The launcher selects the project venv before `uv run`, prints/flushes the startup
+banner, and waits for Uvicorn. Errors are readable, Ctrl+C is handled, and the
+absolute virtualenv directory is excluded from reload watching.
 
-```toml
-[project.scripts]
-boltra = "boltra.cli.main:run"
-```
+Windows executes `dev/windows.py` by file path using the app's Python. Boltra is
+not required inside that environment. The runner adapts Uvicorn's internal reload
+supervisor to terminate the old worker instead of broadcasting console signals
+or hanging. Repeated real reloads act as a compatibility test. Windows development
+worker shutdown hooks are not guaranteed.
 
-### Rust performance profile
+## Packaging
 
-Release builds use aggressive optimization for future ORM hot paths:
+Hatchling builds `src/boltra/` into one `py3-none-any` wheel with templates and
+`py.typed`. Tests build and inspect wheel/source archives, then install the wheel
+in a clean environment to exercise the CLI and resources outside the checkout.
 
-```toml
-# Cargo.toml
-[profile.release]
-lto = "fat"
-codegen-units = 1
-strip = "symbols"
-```
-
-## Module boundaries (current and planned)
-
-| Module | Phase | Responsibility |
-|--------|-------|----------------|
-| `boltra.cli` | 1 | Command-line interface |
-| `boltra.native` | 0 | Rust bridge + fallback |
-| `boltra.project` | 2, 4 | Project generator, generated settings, `.env.example` |
-| `boltra.dev` | 3 | Dev server wrapper |
-| `boltra.apps` | 5+ | App scaffolding |
-| `boltra.orm` | 9–21 | Async ORM (Python + Rust) |
-
-Keep **clean boundaries** — CLI should not contain ORM logic; internal packages talk through well-defined APIs.
-
-## Async-first (future)
-
-Public database APIs will be `async`. The CLI may remain sync where appropriate; generated project code and ORM will use `async`/`await` throughout.
+Future modules retain these boundaries: CLI code routes commands; domain modules
+implement filesystem, database, or application behavior.

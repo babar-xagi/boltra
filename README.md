@@ -2,117 +2,137 @@
 
 **Django-like productivity for FastAPI projects.**
 
-Boltra is a FastAPI development kit for building modern backend systems faster. It generates direct FastAPI code and adds structure, CLI automation, apps, ORM, admin, auth, workers, and **Rust-powered performance modules** — without hiding FastAPI.
+Boltra is a Python development toolkit that creates small, readable FastAPI
+projects and runs them with one command. Generated applications use ordinary
+`FastAPI()` code, so you can extend them with the FastAPI APIs you already know.
+
+The current source version is **0.5.0**. Boltra is in early development and ships
+as a **pure Python package**. Its CLI uses the standard library; installing Boltra
+does not require a compiler or native build toolchain.
+
+## 🧩 Implemented features
+
+| Feature | What it does |
+|---------|--------------|
+| `boltra new <name>` | Creates a direct FastAPI app, settings, dependencies, and `.env.example` |
+| `boltra dev` | Discovers the project, launches Uvicorn, and reloads Python changes |
+| Typed settings | Reads environment variables and `.env` with Pydantic settings |
+| Project validation | Rejects invalid names and existing destinations; reports write failures |
+| Configurable server | Reads app target, host, and port from `[tool.boltra]` |
+| Windows reload support | Uses a Python compatibility runner for reliable worker restart |
+| Help and version | Supports `--help`, `--version`, and `python -m boltra` |
+
+App add/remove, router discovery, ORM, admin, authentication, workers, and AI are
+**planned**. They are not available commands yet. See the [roadmap](doc/plan/phase.md).
+
+## 🚀 Quick start
+
+Requirements: **Python 3.12+** and **uv**. These commands install this checkout as
+a separate CLI tool, keeping Boltra independent of your generated app's environment.
 
 ```bash
-boltra --help
-boltra --version
-boltra new myapp
-cd myapp && uv sync && boltra dev
+git clone https://github.com/babar-xagi/boltra.git
+cd boltra
+uv tool install .
 
-# Coming in Phase 5+
-boltra add orm
+boltra new school_api
+cd school_api
+uv sync
+cp .env.example .env
+boltra dev
 ```
 
-## Status
+On PowerShell, `Copy-Item .env.example .env` also copies the environment example.
+Set your own `SECRET_KEY` in `.env`. The generated default triggers a warning.
 
-Early development. See [`doc/plan/phase.md`](doc/plan/phase.md) for the phased roadmap.
+Open the app at [localhost:8000](http://127.0.0.1:8000/) and interactive API docs
+at [localhost:8000/docs](http://127.0.0.1:8000/docs).
 
-| Track | Phases | Focus |
-|-------|--------|-------|
-| Foundation | 0–8 | CLI, project generator, apps, settings |
-| ORM Core | 9–18 | From-scratch async ORM (Python) |
-| ORM Rust | 19–21 | SQL builder, row decoder, pool helpers |
-| Batteries | 22–28 | Admin, auth, worker, AI, Docker, tests |
-| Hardening | 29–32 | Observability, security, benchmarks |
-| V1 | 33 | Stable release |
+The home endpoint returns:
 
-## Stack
+```json
+{"message": "Hello from FastAPI + Boltra Kit"}
+```
 
-| Layer | Tool | Role |
-|-------|------|------|
-| Python | **uv** | Fast package manager and virtualenv |
-| Python ↔ Rust | **maturin** + **PyO3** | Native extension build and FFI |
-| Rust | **cargo** | Hot-path acceleration (SQL, row decode) |
-| Quality | ruff, mypy, pytest, pre-commit | Lint, types, tests |
+For other installation options and troubleshooting, read the
+[installation guide](doc/user/installation.md).
 
-## Requirements
+## What gets generated
 
-- Python ≥ 3.12
-- [uv](https://docs.astral.sh/uv/) (package manager)
-- Rust ≥ 1.85 (maturin compiles `boltra._native` on install)
+```text
+school_api/
+├── main.py          # Your ordinary FastAPI application
+├── settings.py      # Typed settings and environment loading
+├── pyproject.toml   # App dependencies and development-server configuration
+└── .env.example     # Example local environment variables
+```
 
-## Development
+The app depends on FastAPI, Pydantic settings, and Uvicorn. Boltra itself is a CLI
+tool and is not added as an app runtime dependency.
+
+For example, add this route to `main.py` while `boltra dev` is running:
+
+```python
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+```
+
+The server reloads the change. Open `/health` or try it from `/docs`.
+
+Change the server port in the generated `pyproject.toml`:
+
+```toml
+[tool.boltra]
+mode = "fastapi-kit"
+app = "main:app"
+settings = "settings.py"
+host = "127.0.0.1"
+port = 8080
+```
+
+Restart `boltra dev` after changing `.env` or server configuration. Automatic
+reload watches Python source files, not environment/configuration changes.
+
+## 📚 Documentation
+
+| Audience | Guide |
+|----------|-------|
+| Getting started | [Complete quickstart](doc/user/quickstart.md) |
+| CLI users | [Commands, options, errors, and examples](doc/user/cli.md) |
+| App developers | [Settings reference](doc/user/settings.md) |
+| Contributors | [Developer guide](doc/developer/README.md) |
+| Understanding the code | [Detailed file-by-file reference](doc/developer/file-reference.md) |
+| Understanding the layout | [Repository structure](doc/developer/project-structure.md) |
+| Validation results | [Verification report](doc/developer/verification.md) |
+| Future work | [Python-first roadmap](doc/plan/phase.md) |
+
+## 🛠️ Develop Boltra
 
 ```bash
-# Install Python (uv manages the venv automatically)
-uv sync --group dev
-
-# Rebuild the PyO3 extension after Rust changes
-uv run maturin develop --uv
-
-# Run quality checks
+uv sync --locked --group dev
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
 uv run pytest
-
-# Verify Python fallback when native is disabled
-BOLTRA_DISABLE_NATIVE=1 uv run pytest
-
-# Install pre-commit hooks
-uv run pre-commit install
+uv run pytest --cov=boltra --cov-report=term-missing
+uv build
 ```
 
-### Native extension
-
-The Rust crate `crates/boltra-core` exposes `boltra._native` via PyO3. Python code uses `boltra.native.is_available()` and always has a fallback path.
-
-```python
-import boltra
-
-boltra.is_available()      # True when PyO3 extension is loaded
-boltra.native_version()    # "0.4.0"
-```
-
-Disable native acceleration (for testing or unsupported platforms):
-
-```bash
-BOLTRA_DISABLE_NATIVE=1 uv run pytest
-```
-
-## Repository layout
+Source code is organized by responsibility:
 
 ```text
-boltra/
-├── src/boltra/              # Python package
-│   ├── native.py            # Rust bridge + fallback
-│   └── _native.pyi          # Type stubs for PyO3 module
-├── crates/boltra-core/      # PyO3 extension (maturin)
-├── tests/
-├── benchmarks/
-├── doc/
-│   ├── user/                # end-user guides
-│   ├── developer/           # contributor docs
-│   └── plan/
-├── pyproject.toml           # maturin build backend
-├── Cargo.toml               # Rust workspace (release LTO enabled)
-└── uv.lock
+src/boltra/
+├── cli/             # cli.py: entry point and command routing; parser.py: arguments
+├── project/         # Generator, shared validation, and readable template assets
+└── dev/             # Project configuration, server launcher, and Windows runner
 ```
 
-## Documentation
-
-| Audience | Start here |
-|----------|------------|
-| **Users** | [doc/user/](doc/user/README.md) — install, CLI |
-| **Developers** | [doc/developer/](doc/developer/README.md) — architecture, files, workflow |
-| **Roadmap** | [doc/plan/phase.md](doc/plan/phase.md) |
-| **Rusjango migration** | [doc/plan/rusjango-migration.md](doc/plan/rusjango-migration.md) |
-| **Changelog** | [doc/plan/CHANGELOG.md](doc/plan/CHANGELOG.md) |
-
-- [Project vision](boltra-doc.md)
-- [Contributing](CONTRIBUTING.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and commit conventions.
+Windows development reload terminates the old worker; application shutdown hooks
+are not guaranteed during these restarts. Use normal Uvicorn without reload for
+production serving.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE) — Boltra Contributors.

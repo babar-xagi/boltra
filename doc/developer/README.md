@@ -1,53 +1,38 @@
-# Developer Documentation
+# Developer guide
 
-Technical documentation for contributors working on the Boltra codebase.
+Boltra is a Python package under `src/boltra/`. Start with the architecture, then
+use the file reference to choose where to make a change.
 
-## Contents
+| Guide | Purpose |
+|-------|---------|
+| [Architecture](architecture.md) | Command flow, boundaries, templates, and server environments |
+| [Repository structure](project-structure.md) | Complete maintained directory layout |
+| [File reference](file-reference.md) | Every source file's functions, responsibilities, and tests |
+| [Development workflow](development-workflow.md) | Setup, daily commands, changes, and commits |
+| [Testing](testing.md) | Unit, settings, HTTP/reload, package, and coverage checks |
+| [Verification results](verification.md) | Recorded local results and their limits |
+| [Releasing](releasing.md) | Version, build, inspect, tag, and publish |
 
-| Guide | Description |
-|-------|-------------|
-| [Architecture](architecture.md) | High-level design, Python ↔ Rust split |
-| [CLI architecture](cli-architecture.md) | Rust clap parse + Python dispatch |
-| [Project generator](project-generator.md) | `boltra new` templates and validation |
-| [Dev server](dev-server.md) | `boltra dev` config and uvicorn launcher |
-| [Releasing](releasing.md) | GitHub + PyPI publish checklist |
-| [Project structure](project-structure.md) | Every folder and key file explained |
-| [Python package](python-package.md) | `src/boltra/` modules and APIs |
-| [Rust native layer](rust-native.md) | PyO3, maturin, `crates/boltra-core` |
-| [Tooling & CI](tooling.md) | uv, ruff, mypy, pytest, pre-commit, GitHub Actions |
-| [Development workflow](development-workflow.md) | Day-to-day commands and phase rules |
-
-## Quick start for developers
+## Set up
 
 ```bash
-uv sync --group dev
-uv run pre-commit install
-uv run pytest
+uv sync --locked --group dev
 uv run boltra --help
+uv run pytest
 ```
 
-## Principles (from the roadmap)
+Hatchling builds a platform-independent wheel; uv manages the editable Python
+environment. No native toolchain is part of the build.
 
-1. **Async-first** — public database APIs will be `async`
-2. **Rust where it wins** — hot paths in Rust; Python always has a fallback
-3. **Direct FastAPI** — generated projects use real FastAPI, no hidden wrapper
-4. **One phase at a time** — see [`doc/plan/phase.md`](../plan/phase.md)
-5. **Benchmark before Rust** — native code must beat Python baseline
+## Read the implementation
 
-## Current phase status
+1. `cli/cli.py` — starts and routes commands.
+2. `cli/parser.py` — turns arguments into `ParsedCommand` data.
+3. `project/generator.py` — creates projects and handles collisions/errors.
+4. `project/template_engine.py` and `templates/` — define generated output.
+5. `dev/config.py` — locates and validates project configuration.
+6. `dev/server.py` — selects an environment and launches Uvicorn.
+7. `dev/windows.py` — handles Windows reload compatibility.
 
-| Phase | Status | Summary |
-|-------|--------|---------|
-| 0 | Done | Repo layout, uv, maturin, PyO3, CI |
-| 1 | Done | `boltra --help`, `boltra --version` CLI |
-| 2 | Done | `boltra new`, Rust clap + Python handlers |
-| 3 | Done | `boltra dev` dev server |
-| 4 | In progress | Pydantic settings & `.env` scaffold |
-
-Track shipped work in [CHANGELOG](../plan/CHANGELOG.md).
-
-## Related docs
-
-- [User docs](../user/README.md) — installation and CLI for end users
-- [boltra-doc.md](../../boltra-doc.md) — full product vision
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) — PR rules and quality gates
+Paths above are inside `src/boltra/`. The [roadmap](../plan/phase.md) identifies
+app management and the Python ORM as future work.

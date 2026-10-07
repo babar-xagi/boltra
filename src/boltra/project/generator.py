@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from pathlib import Path
 
-from boltra.cli.parser import validate_project_name
-from boltra.project.templates import env_example, main_py, pyproject_toml, settings_py
+from boltra.project.template_engine import (
+    env_example,
+    main_py,
+    pyproject_toml,
+    settings_py,
+)
+from boltra.project.validation import validate_project_name
 
 
 class ProjectError(Exception):
@@ -27,32 +33,40 @@ def create_project(name: str, *, cwd: Path | None = None) -> Path:
     """
     try:
         validate_project_name(name)
-    except Exception as exc:
+    except ValueError as exc:
         raise ProjectError(str(exc)) from exc
 
     base = (cwd or Path.cwd()).resolve()
     project_dir = base / name
 
-    if project_dir.exists():
+    if project_dir.exists() or project_dir.is_symlink():
         msg = f"directory '{name}' already exists"
         raise ProjectError(msg)
 
-    project_dir.mkdir(parents=False, exist_ok=False)
-    (project_dir / "main.py").write_text(main_py(name), encoding="utf-8", newline="\n")
-    (project_dir / "settings.py").write_text(
-        settings_py(name),
-        encoding="utf-8",
-        newline="\n",
-    )
-    (project_dir / "pyproject.toml").write_text(
-        pyproject_toml(name),
-        encoding="utf-8",
-        newline="\n",
-    )
-    (project_dir / ".env.example").write_text(
-        env_example(name),
-        encoding="utf-8",
-        newline="\n",
-    )
+    try:
+        project_dir.mkdir(parents=False, exist_ok=False)
+    except OSError as exc:
+        raise ProjectError(f"cannot create project '{name}': {exc}") from exc
+
+    # Record each destination before writing: even a failed write can leave a file.
+    written: list[Path] = []
+    try:
+        for filename, content in (
+            ("main.py", main_py(name)),
+            ("settings.py", settings_py(name)),
+            ("pyproject.toml", pyproject_toml(name)),
+            (".env.example", env_example(name)),
+        ):
+            path = project_dir / filename
+            written.append(path)
+            path.write_text(content, encoding="utf-8", newline="\n")
+    except OSError as exc:
+        # Remove only generated files; preserve anything else in the directory.
+        for path in reversed(written):
+            with suppress(OSError):
+                path.unlink(missing_ok=True)
+        with suppress(OSError):
+            project_dir.rmdir()
+        raise ProjectError(f"cannot write project '{name}': {exc}") from exc
 
     return project_dir

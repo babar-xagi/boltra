@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final
 
-_APP_PATH_RE: Final = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z_][a-zA-Z0-9_]*$")
+_IDENTIFIER: Final = r"[a-zA-Z_][a-zA-Z0-9_]*"
+_APP_PATH_RE: Final = re.compile(
+    rf"{_IDENTIFIER}(?:\.{_IDENTIFIER})*:{_IDENTIFIER}(?:\.{_IDENTIFIER})*"
+)
 _DEFAULT_HOST: Final = "127.0.0.1"
 _DEFAULT_PORT: Final = 8000
 
@@ -32,7 +35,7 @@ def has_tool_boltra(pyproject_path: Path) -> bool:
     """Return True when ``pyproject.toml`` contains a ``[tool.boltra]`` table."""
     try:
         data = tomllib.loads(_read_pyproject_text(pyproject_path))
-    except (OSError, tomllib.TOMLDecodeError):
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError):
         return False
     tool = data.get("tool")
     if not isinstance(tool, dict):
@@ -44,6 +47,7 @@ def has_tool_boltra(pyproject_path: Path) -> bool:
 def find_project_root(start: Path | None = None) -> Path:
     """Find the nearest directory with ``[tool.boltra]`` in ``pyproject.toml``."""
     current = (start or Path.cwd()).resolve()
+    # Walk upward so `boltra dev` also works from a project's subdirectory.
     for directory in [current, *current.parents]:
         pyproject = directory / "pyproject.toml"
         if pyproject.is_file() and has_tool_boltra(pyproject):
@@ -58,6 +62,9 @@ def load_boltra_config(pyproject_path: Path) -> BoltraProjectConfig:
         data = tomllib.loads(_read_pyproject_text(pyproject_path))
     except OSError as exc:
         msg = f"cannot read {pyproject_path}"
+        raise DevConfigError(msg) from exc
+    except UnicodeError as exc:
+        msg = f"invalid UTF-8 in {pyproject_path}"
         raise DevConfigError(msg) from exc
     except tomllib.TOMLDecodeError as exc:
         msg = f"invalid TOML in {pyproject_path}"
@@ -77,7 +84,7 @@ def load_boltra_config(pyproject_path: Path) -> BoltraProjectConfig:
     host = _load_host(boltra_table)
     port = _load_port(boltra_table)
 
-    if not _APP_PATH_RE.match(app):
+    if not _APP_PATH_RE.fullmatch(app):
         msg = f"invalid [tool.boltra] app path '{app}' (expected module:attr)"
         raise DevConfigError(msg)
 
@@ -91,6 +98,7 @@ def load_boltra_config(pyproject_path: Path) -> BoltraProjectConfig:
 
 
 def _read_pyproject_text(pyproject_path: Path) -> str:
+    # Some Windows editors add a BOM; utf-8-sig accepts either UTF-8 form.
     return pyproject_path.read_text(encoding="utf-8-sig")
 
 
@@ -104,6 +112,7 @@ def _load_host(boltra_table: dict[str, Any]) -> str:
 
 def _load_port(boltra_table: dict[str, Any]) -> int:
     raw_port = boltra_table.get("port", _DEFAULT_PORT)
+    # bool is an int subclass, but true/false are not meaningful TCP ports.
     if isinstance(raw_port, bool) or not isinstance(raw_port, int):
         msg = "invalid [tool.boltra] port value (expected integer 1-65535)"
         raise DevConfigError(msg)

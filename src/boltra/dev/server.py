@@ -40,14 +40,23 @@ def build_uvicorn_command(
         "--port",
         str(config.port),
         "--reload",
+        "--reload-exclude",
+        str(project_root / ".venv"),
     ]
 
-    if shutil.which("uv") is not None:
-        return ["uv", "run", "uvicorn", *uvicorn_args]
-
+    # Execute the runner with the app's Python, where Uvicorn is installed.
+    # Generated apps therefore do not need Boltra as a runtime dependency.
+    windows_runner = str(Path(__file__).with_name("windows.py"))
     venv_python = _find_venv_python(project_root)
     if venv_python is not None:
+        if sys.platform == "win32":
+            return [str(venv_python), windows_runner, *uvicorn_args]
         return [str(venv_python), "-m", "uvicorn", *uvicorn_args]
+
+    if shutil.which("uv") is not None:
+        if sys.platform == "win32":
+            return ["uv", "run", "python", windows_runner, *uvicorn_args]
+        return ["uv", "run", "uvicorn", *uvicorn_args]
 
     msg = "no project environment found — run `uv sync` in the project directory first"
     raise DevServerError(msg)
@@ -55,7 +64,8 @@ def build_uvicorn_command(
 
 def format_dev_banner(config: BoltraProjectConfig) -> str:
     """Return the startup banner printed before uvicorn launches."""
-    base = f"http://{config.host}:{config.port}"
+    host = f"[{config.host}]" if ":" in config.host else config.host
+    base = f"http://{host}:{config.port}"
     return (
         "Boltra dev server\n"
         f"  Mode:  {config.mode}\n"
@@ -82,6 +92,7 @@ def run_dev_server(*, cwd: Path | None = None) -> int:
         return 1
 
     sys.stdout.write(format_dev_banner(config))
+    # Show URLs before the child process starts writing its server logs.
     sys.stdout.flush()
 
     try:
@@ -89,7 +100,7 @@ def run_dev_server(*, cwd: Path | None = None) -> int:
     except KeyboardInterrupt:
         sys.stdout.write("\nStopped Boltra dev server.\n")
         return 130
-    except FileNotFoundError as exc:
+    except OSError as exc:
         sys.stderr.write(f"error: failed to start uvicorn ({exc})\n")
         return 1
 

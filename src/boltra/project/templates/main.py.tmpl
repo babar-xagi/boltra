@@ -1,0 +1,15 @@
+from fastapi import FastAPI
+from settings import settings
+
+# This stays an ordinary FastAPI application that you can extend directly.
+app = FastAPI(
+    title=settings.api_title,
+    version="0.1.0",
+    debug=settings.debug,
+)
+
+
+@app.get("/")
+async def home() -> dict[str, str]:
+    """Return the starter project's greeting."""
+    return {"message": "Hello from FastAPI + Boltra Kit"}

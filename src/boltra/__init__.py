@@ -1,6 +1,5 @@
-"""Boltra — FastAPI development kit with Rust-powered performance modules."""
+"""Boltra: a Python development toolkit for FastAPI projects."""
 
-from boltra.native import is_available, native_version
-
-__version__ = "0.4.0"
-__all__ = ["__version__", "is_available", "native_version"]
+# Keep this value aligned with [project].version in pyproject.toml.
+__version__ = "0.5.0"
+__all__ = ["__version__"]
