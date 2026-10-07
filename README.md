@@ -33,17 +33,15 @@ does not require a compiler or native build toolchain.
 | Help and version | Supports `--help`, `--version`, and `python -m boltra` |
 
 App removal, router discovery, ORM, admin, authentication, workers, and AI are
-**planned**. They are not available commands yet. See the [roadmap](doc/plan/phase.md).
+**planned**. They are not available commands yet. See the [roadmap](https://github.com/babar-xagi/boltra/blob/main/doc/plan/phase.md).
 
 ## 🚀 Quick start
 
-Requirements: **Python 3.12+** and **uv**. These commands install this checkout as
+Requirements: **Python 3.12+** and **uv**. Install Boltra from PyPI as
 a separate CLI tool, keeping Boltra independent of your generated app's environment.
 
 ```bash
-git clone https://github.com/babar-xagi/boltra.git
-cd boltra
-uv tool install .
+uv tool install boltra==0.5.0
 
 boltra new school_api
 cd school_api
@@ -55,6 +53,9 @@ boltra dev
 On PowerShell, `Copy-Item .env.example .env` also copies the environment example.
 Set your own `SECRET_KEY` in `.env`. The generated default triggers a warning.
 
+You can also install with `python -m pip install boltra==0.5.0` inside a Python
+environment. Run `python -m boltra --help` if the console script is not on your PATH.
+
 Open the app at [localhost:8000](http://127.0.0.1:8000/) and interactive API docs
 at [localhost:8000/docs](http://127.0.0.1:8000/docs).
 
@@ -65,7 +66,7 @@ The home endpoint returns:
 ```
 
 For other installation options and troubleshooting, read the
-[installation guide](doc/user/installation.md).
+[installation guide](https://github.com/babar-xagi/boltra/blob/main/doc/user/installation.md).
 
 ## 📁 Project layout and configuration
 
@@ -99,7 +100,7 @@ boltra add app students
 This creates `apps/students/router.py` and registers its `APIRouter` in the
 configured FastAPI application. Open `/students/` to receive
 `{"app": "students", "status": "ok"}`. Add more routes to that router as your
-app grows. See the [modular apps guide](doc/user/apps.md) for examples, supported
+app grows. See the [modular apps guide](https://github.com/babar-xagi/boltra/blob/main/doc/user/apps.md) for examples, supported
 project layouts, and recovery behavior.
 
 Change the server port in the generated `pyproject.toml`:
@@ -120,15 +121,15 @@ reload watches Python source files, not environment/configuration changes.
 
 | Audience | Guide |
 |----------|-------|
-| Getting started | [Complete quickstart](doc/user/quickstart.md) |
-| CLI users | [Commands, options, errors, and examples](doc/user/cli.md) |
-| Modular API routes | [App creation and registration](doc/user/apps.md) |
-| App developers | [Settings reference](doc/user/settings.md) |
-| Contributors | [Developer guide](doc/developer/README.md) |
-| Understanding the code | [Detailed file-by-file reference](doc/developer/file-reference.md) |
-| Understanding the layout | [Repository structure](doc/developer/project-structure.md) |
-| Validation results | [Verification report](doc/developer/verification.md) |
-| Future work | [Python-first roadmap](doc/plan/phase.md) |
+| Getting started | [Complete quickstart](https://github.com/babar-xagi/boltra/blob/main/doc/user/quickstart.md) |
+| CLI users | [Commands, options, errors, and examples](https://github.com/babar-xagi/boltra/blob/main/doc/user/cli.md) |
+| Modular API routes | [App creation and registration](https://github.com/babar-xagi/boltra/blob/main/doc/user/apps.md) |
+| App developers | [Settings reference](https://github.com/babar-xagi/boltra/blob/main/doc/user/settings.md) |
+| Contributors | [Developer guide](https://github.com/babar-xagi/boltra/blob/main/doc/developer/README.md) |
+| Understanding the code | [Detailed file-by-file reference](https://github.com/babar-xagi/boltra/blob/main/doc/developer/file-reference.md) |
+| Understanding the layout | [Repository structure](https://github.com/babar-xagi/boltra/blob/main/doc/developer/project-structure.md) |
+| Validation results | [Verification report](https://github.com/babar-xagi/boltra/blob/main/doc/developer/verification.md) |
+| Future work | [Python-first roadmap](https://github.com/babar-xagi/boltra/blob/main/doc/plan/phase.md) |
 
 ## 🛠️ Develop Boltra
 
@@ -152,11 +153,11 @@ src/boltra/
 └── dev/             # Project configuration, server launcher, and Windows runner
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and commit conventions.
+See [CONTRIBUTING.md](https://github.com/babar-xagi/boltra/blob/main/CONTRIBUTING.md) for checks and commit conventions.
 Windows development reload terminates the old worker; application shutdown hooks
 are not guaranteed during these restarts. Use normal Uvicorn without reload for
 production serving.
 
 ## License
 
-[MIT](LICENSE) — Boltra Contributors.
+[MIT](https://github.com/babar-xagi/boltra/blob/main/LICENSE) — Boltra Contributors.

@@ -7,7 +7,7 @@ Keep `[project].version` in `pyproject.toml` aligned with `__version__` in
 
 Version 0.5.0 moves to Python-only builds. The old native helper API and internal
 `cli.main` / `cli.dispatch` modules are removed. Import CLI functions from
-`boltra.cli`. Command names remain `new`, `dev`, help, and version.
+`boltra.cli`. Commands include `new`, `dev`, `add app`, help, and version.
 
 ## Validate and build
 
@@ -59,8 +59,13 @@ git push origin v0.5.0
 For manual publication with credentials provided through the environment:
 
 ```bash
-uv publish dist/*
+uv publish dist/boltra-0.5.0-py3-none-any.whl dist/boltra-0.5.0.tar.gz
 ```
 
 A commit/build does not publish anything. Keep credentials out of source and
 commit messages.
+
+Wait for the tag's publishing workflow to succeed, then verify the version and
+both distribution files on PyPI. Create a GitHub release for the same existing
+tag with reviewed release notes and the workflow's distribution artifacts.
+Avoid uploading files from older versions that remain in `dist/`.

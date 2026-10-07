@@ -4,11 +4,13 @@ All notable changes to Boltra are documented here. Entries follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the phased roadmap
 in [`phase.md`](phase.md).
 
-## [Unreleased] — 0.5.0
+## [Unreleased]
+
+## [0.5.0] - 2026-10-07
 
 ### Changed
 
-- Restored FastAPI-only product scope and removed the multi-framework adapter proposal.
+- Clarified Boltra's FastAPI development toolkit scope and usage examples.
 
 - Migrated the package to pure Python: argparse CLI, Hatchling build backend,
   platform-independent wheel, and no project-owned native extension/toolchain.

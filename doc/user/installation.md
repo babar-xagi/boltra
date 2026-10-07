@@ -9,6 +9,28 @@ Boltra's own distribution is a pure Python `py3-none-any` wheel. It does not bui
 an extension or require a compiler. Generated applications install their own
 FastAPI, Pydantic settings, and Uvicorn dependencies.
 
+## Install from PyPI
+
+```bash
+uv tool install boltra==0.5.0
+boltra --version
+boltra --help
+```
+
+This isolated tool installation keeps the CLI available when you switch into a
+generated app's environment. To update an existing tool installation to this release:
+
+```bash
+uv tool install --reinstall boltra==0.5.0
+```
+
+Alternatively, install inside your chosen Python environment:
+
+```bash
+python -m pip install --upgrade boltra==0.5.0
+python -m boltra --help
+```
+
 ## Install this checkout as a CLI tool
 
 ```bash
@@ -21,8 +43,7 @@ boltra --help
 
 The source version prints `0.5.0`. A tool installation has its own environment,
 so switching into a generated app does not make the Boltra command disappear.
-The source changes here must be published before a registry install can select
-this version; the commands above install the checkout directly.
+The commands above install the checkout directly, including any local changes.
 
 After changing local source, rebuild the installed tool with:
 
