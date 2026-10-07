@@ -8,7 +8,6 @@ Choose the guide for the work you want to do.
 | [Developer guide](developer/README.md) | Understand the source files, contribute changes, test, and release |
 | [Roadmap](plan/phase.md) | Current implementation and future Python milestones |
 | [Changelog](plan/CHANGELOG.md) | Notable changes; older entries describe historical implementations |
-| [Migration ideas](plan/rusjango-migration.md) | Product ideas carried forward from Rusjango |
 
 Start with the [quickstart](user/quickstart.md) to build an app, or the
 [file reference](developer/file-reference.md) to understand Boltra's implementation.

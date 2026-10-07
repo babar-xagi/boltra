@@ -18,6 +18,17 @@ slice, test it, and document it before expanding scope.
 Validation is recorded in [the verification report](../developer/verification.md).
 The source version is 0.5.0; package publication is a separate release action.
 
+## Framework compatibility track
+
+Multi-framework workflow is the product goal. FastAPI is the only implemented
+scaffold/launcher. Flask, Django-based APIs, Django Bolt, TurboAPI, and future
+framework integrations require adapters before they can be advertised as supported.
+
+Define the selector and adapter contract, preserve/test the current FastAPI path,
+then add framework-specific templates and runtimes. App/ORM tooling must account
+for each adapter's capabilities rather than assuming FastAPI conventions apply
+everywhere. See [the adapter design](../developer/framework-adapters.md).
+
 ## Foundation
 
 | Phase | Deliverable | Exit check |

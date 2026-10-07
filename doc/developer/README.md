@@ -5,6 +5,7 @@ use the file reference to choose where to make a change.
 
 | Guide | Purpose |
 |-------|---------|
+| [Framework adapter design](framework-adapters.md) | Multi-framework direction, selectors, and support criteria |
 | [Architecture](architecture.md) | Command flow, boundaries, templates, and server environments |
 | [Repository structure](project-structure.md) | Complete maintained directory layout |
 | [File reference](file-reference.md) | Every source file's functions, responsibilities, and tests |

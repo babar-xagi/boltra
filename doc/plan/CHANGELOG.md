@@ -8,6 +8,10 @@ in [`phase.md`](phase.md).
 
 ### Changed
 
+- Clarified Boltra's general-purpose, multi-framework direction and separated
+  current FastAPI support from planned Flask, Django-based, Django Bolt, TurboAPI,
+  and future integrations. Added a framework adapter design and verified sources.
+
 - Migrated the package to pure Python: argparse CLI, Hatchling build backend,
   platform-independent wheel, and no project-owned native extension/toolchain.
 - Moved CLI implementation to `cli/cli.py` and shared name validation to

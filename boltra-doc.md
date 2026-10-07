@@ -1,49 +1,54 @@
 # Boltra product direction
 
-Boltra brings Django-like project productivity to FastAPI: small starting
-projects, clear settings, and a CLI that remains useful as applications grow.
-The implementation strategy is **Python first**, with correctness, readable code,
-and tests before optimization.
+Boltra is a general-purpose Python API development kit. Its goal is a consistent
+project-development workflow across frameworks, with readable scaffolding,
+configuration, development commands, and optional tooling.
 
-## What exists
+Applications should retain their chosen framework's normal APIs and conventions.
+The direction covers FastAPI, Flask, Django-based APIs, Django Bolt, TurboAPI,
+and future framework adapters. The toolkit is developed in Python first.
 
-The current toolkit creates an ordinary FastAPI app with typed environment
-settings and launches a reloadable development server. The complete shipped
-behavior is documented in the [README](README.md) and [user guides](doc/user/README.md).
+## Implemented foundation
 
-Boltra is a development toolkit. It does not implement its own HTTP routing,
-validation framework, or ASGI server. FastAPI and Uvicorn provide those parts.
+Version 0.5.0 generates direct FastAPI applications with typed environment settings
+and launches a reloadable Uvicorn development server. Other framework adapters
+and selector dispatch are not implemented yet. Current behavior is documented
+in the [README](README.md) and [user guides](doc/user/README.md).
+
+Boltra's core is a development toolkit. It delegates routing, validation, and
+serving to the selected framework/runtime rather than defining a replacement
+HTTP framework. Today that delegation is specifically FastAPI and Uvicorn.
 
 ## Design principles
 
-1. Keep `from fastapi import FastAPI` visible in generated applications.
-2. Start with four understandable project files; add structure when needed.
-3. Build features in Python before considering performance optimization.
-4. Keep CLI, generation, settings, and server responsibilities separate.
+1. Keep the selected framework's ordinary imports and conventions visible.
+2. Separate shared workflow from framework-specific templates and runtime adapters.
+3. Keep starter projects small and add features when needed.
+4. Implement correct Python behavior before optimization.
 5. Make future feature installation/removal explicit and predictable.
-6. Measure performance instead of promising unverified speedups.
-7. Ship tests and examples with public behavior.
+6. Document compatibility per adapter and verify it with integration tests.
+7. Ship examples that distinguish current capabilities from proposals.
 
-## Future direction
+## Framework-selection direction
 
-First complete modular app creation/removal, structured settings editing, and
-router discovery. Then design and implement a Python async ORM in vertical slices:
-connections, model metadata, table creation, CRUD, filters, transactions, and
-migrations. Admin and authentication should build on a tested foundation.
+A future framework selector should choose appropriate templates, dependencies,
+settings conventions, and development commands. A FastAPI project should use the
+FastAPI adapter; a Flask project should use the Flask adapter; Django-based and
+custom-runtime projects should use their corresponding adapters.
 
-Workers, Docker/test scaffolding, thin AI integration, security defaults, and
-observability follow the core workflow. These are roadmap items, not current APIs.
+The current `mode` field is a descriptive label. Changing it does not switch
+frameworks. The [adapter design](doc/developer/framework-adapters.md) records the
+proposed contract, runtime differences, and checks needed before additional modes
+can be called supported.
 
-See the [execution roadmap](doc/plan/phase.md) for milestones and exit criteria.
-The [Rusjango migration guide](doc/plan/rusjango-migration.md) preserves useful
-product ideas while retaining FastAPI's routing and Pydantic's validation.
+## Future features
 
-## Boundaries
+After defining the adapter boundary, extend shared project tooling and implement
+modular application management. ORM, admin, authentication, workers, Docker/test
+scaffolding, thin AI integration, security, and observability remain roadmap work.
+Framework capabilities differ: Django integrations should respect Django's existing
+settings, ORM, admin, and application conventions.
 
-There is no project-owned native extension, compiler requirement, or alternate
-native API engine in the current implementation. A future optimization proposal
-must preserve the Python behavior, include a benchmark, and be evaluated after
-the corresponding Python feature is stable. It is not a dependency of the v1 plan.
-
-Payments, GraphQL, multi-tenancy, and a full agent framework remain separate future
-proposals. The immediate goal is a reliable, well-documented FastAPI development kit.
+See the [execution roadmap](doc/plan/phase.md) for current milestones. Optional
+optimizations must preserve Python functionality and be justified by benchmarks.
+Payments, GraphQL, multi-tenancy, and a full agent framework remain future proposals.

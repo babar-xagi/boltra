@@ -2,7 +2,8 @@
 
 ## Runtime boundaries
 
-Boltra is a Python development tool. Its CLI, generator, configuration loader,
+Boltra is a general-purpose Python API development toolkit. The current
+implementation targets FastAPI; the product direction includes multiple frameworks. Its CLI, generator, configuration loader,
 and process launcher use the standard library. The package has no declared
 runtime dependencies. Generated apps install their own FastAPI, Pydantic-settings,
 and Uvicorn dependencies.
@@ -87,3 +88,18 @@ in a clean environment to exercise the CLI and resources outside the checkout.
 
 Future modules retain these boundaries: CLI code routes commands; domain modules
 implement filesystem, database, or application behavior.
+
+## Multi-framework direction
+
+The module split above describes the current implementation. Templates are fixed
+to FastAPI and server launch is fixed to Uvicorn; there is no framework adapter
+registry yet. The current `mode` value is a banner label, not runtime dispatch.
+
+The intended next boundary is a framework adapter that supplies starter assets,
+dependencies, settings conventions, app discovery, and the appropriate server
+workflow. Shared validation, filesystem handling, and command orchestration remain
+common. Flask, Django/DRF/Ninja, Django Bolt, TurboAPI, and future frameworks require
+separate adapter acceptance tests before support is advertised.
+
+See the [framework adapter design](framework-adapters.md) for the proposed
+configuration contract and implementation order.
